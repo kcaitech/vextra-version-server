@@ -1,0 +1,17 @@
+node_modules
+dist
+dist_*
+deprecated
+package-lock.json
+.VSCodeCounter
+.DS_Store
+yarn.lock
+
+.idea
+/src/log/
+/deployment/log/
+/deployment/.env
+/.env
+/success.log
+/all.log
+/error.log

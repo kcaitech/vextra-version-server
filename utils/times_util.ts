@@ -46,6 +46,10 @@ export function getYMDHMSS() {
     return getDateTimeWithMs().replace(/[-: .]/g, "")
 }
 
-export async function sleep(ms: number) {
+export async function sleepAsync(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+export async function sleepAsyncReject(ms: number) {
+    return new Promise((resolve, reject) => setTimeout(reject, ms))
 }

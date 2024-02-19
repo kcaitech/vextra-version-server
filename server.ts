@@ -9,6 +9,7 @@ import {
     RadixConvert,
     Repository,
     parseCmds,
+    ICoopNet,
 } from "@kcdesign/data"
 import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
 import config from "./config"
@@ -17,6 +18,7 @@ import sharp from "sharp"
 import {OssStorage, S3Storage, StorageOptions} from "./storage"
 import * as exit_util from "./utils/exit_util"
 import * as console_util from "./utils/console_util"
+import * as times_util from "./utils/times_util"
 import {WebSocket} from "ws"
 import Koa from "koa"
 import Router from "koa-router"
@@ -110,6 +112,24 @@ function parseCmdList(cmdItemList: CmdItem[]): Cmd[] {
 
 const radixRevert = new RadixConvert(62)
 
+class CoopNet implements ICoopNet {
+    hasConnected(): boolean {
+        return true;
+    }
+    async pullCmds(from: string, to: string): Promise<Cmd[]> {
+        const startCmdId = from ? radixRevert.to(from) : 0n
+        const endCmdId = to ? radixRevert.to(to) : undefined
+        const cmdItemList = await findCmdItem(startCmdId, endCmdId)
+        return parseCmdList(cmdItemList)
+    }
+    async postCmds(cmds: Cmd[]): Promise<boolean> {
+        return false;
+    }
+    watchCmds(watcher: (cmds: Cmd[]) => void): void {
+
+    }
+}
+
 async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id))
     const cmdList = parseCmdList(cmdItemList)
@@ -124,16 +144,27 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
 
     const repo = new Repository()
     const document = await importDocument(storage, documentInfo.path, "", documentInfo.version_id, repo)
-    const coopRepo = new CoopRepository(document, repo)
 
+    const coopRepo = new CoopRepository(document, repo)
+    coopRepo.setNet(new CoopNet())
+    coopRepo.setBaseVer(radixRevert.from(documentInfo.last_cmd_id))
+
+    console_util.disableConsole(console_util.ConsoleType.log)
     try {
-        console_util.disableAllConsole()
-        coopRepo.receive(cmdList)
-        console_util.enableAllConsole()
+        const timeoutPromise = times_util.sleepAsyncReject(1000 * 10)
+        const p = new Promise<void>((resolve, reject) => {
+            coopRepo.setProcessCmdsTrigger(() => {
+                resolve()
+            })
+            coopRepo.receive(cmdList)
+        })
+        await Promise.race([p, timeoutPromise])
     } catch (err) {
+        console_util.enableConsole(console_util.ConsoleType.log)
         console.log(`[${documentInfo.id}]generateNewVersion错误：execRemote错误`, err)
         return false
     }
+    console_util.enableConsole(console_util.ConsoleType.log)
 
     // 导出page图片
     const pageImageBase64List: string[] = []

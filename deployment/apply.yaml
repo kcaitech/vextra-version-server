@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: doc-versioning-service
+  name: doc-versioning-service
+  namespace: kc
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: doc-versioning-service
+  template:
+    metadata:
+      labels:
+        app: doc-versioning-service
+    spec:
+      restartPolicy: Always
+      serviceAccount: kc
+      serviceAccountName: kc
+      dnsPolicy: ClusterFirst
+      volumes:
+        - name: doc-versioning-service-config
+          secret:
+            defaultMode: 420
+            secretName: doc-versioning-service-config
+      containers:
+        - name: app
+          image: docker-registry.protodesign.cn:35000/doc-versioning-service:test-0.0.1
+          imagePullPolicy: Always
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+          ports:
+            - containerPort: 10040
+              name: server
+              protocol: TCP
+          startupProbe:
+            failureThreshold: 300
+            httpGet:
+              path: /health_check
+              port: 10040
+              scheme: HTTP
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health_check
+              port: 10040
+              scheme: HTTP
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health_check
+              port: 10040
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 30
+          volumeMounts:
+            - mountPath: /app/.env
+              name: doc-versioning-service-config
+              readOnly: true
+              subPath: .env
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doc-versioning-service
+  namespace: kc
+spec:
+  selector:
+    app: doc-versioning-service
+  ports:
+    - name: web
+      port: 10040
+      protocol: TCP
+      targetPort: 10040
+  type: ClusterIP

@@ -7,16 +7,25 @@ import {
     importDocument,
     IStorage,
     RadixConvert,
-    Repository
+    Repository,
+    parseCmds,
 } from "@kcdesign/data"
 import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
 import config from "./config"
+import {init as palInit} from "./pal/init"
 import sharp from "sharp"
 import {OssStorage, S3Storage, StorageOptions} from "./storage"
 import * as exit_util from "./utils/exit_util"
+import * as console_util from "./utils/console_util"
+import {WebSocket} from "ws"
 import Koa from "koa"
 import Router from "koa-router"
 import BodyParser from "koa-bodyparser"
+
+console_util.objectToStr()
+
+// 触发生成新版本的最小cmd数量
+const MinCmdCount = 100
 
 const ServerPort = 10040
 
@@ -40,7 +49,7 @@ async function getDocument(documentId: string): Promise<Document | undefined> {
         mysqlConn.query(`select d.id, d.path, d.version_id, dv.last_cmd_id
 from document d
 inner join document_version dv on dv.document_id=d.id and dv.version_id=d.version_id and dv.deleted_at is null
-where d.id>${documentId} and d.deleted_at is null
+where d.id=${documentId} and d.deleted_at is null
 limit 1`,
             (err, rows) => {
                 if (err) reject(err);
@@ -76,7 +85,7 @@ type CmdItem = {
 async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: bigint): Promise<CmdItem[]> {
     let mongoDB = mongoDBClient.db("kcserver")
     if (startCmdId === undefined && endCmdId === undefined) return Promise.resolve([]);
-    const documentCollection = mongoDB.collection("document")
+    const documentCollection = mongoDB.collection("document1")
     const findQuery: any = {
         document_id: documentId,
         _id: {},
@@ -88,7 +97,7 @@ async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: b
 }
 
 function parseCmdList(cmdItemList: CmdItem[]): Cmd[] {
-    return cmdItemList.map(cmdItem => {
+    return parseCmds(cmdItemList.map(cmdItem => {
         const cmd = cmdItem.cmd as any
         cmd.id = cmdItem.cmd_id
         cmd.version = radixRevert.from(cmdItem._id)
@@ -96,18 +105,20 @@ function parseCmdList(cmdItemList: CmdItem[]): Cmd[] {
         cmd.time = Number(cmd.time)
         cmd.posttime = Number(cmd.posttime)
         return cmd
-    })
+    }))
 }
 
 const radixRevert = new RadixConvert(62)
 
 async function generateNewVersion(documentInfo: Document): Promise<boolean> {
-    console.log(`[${documentInfo.id}]开始生成新版本`)
-
     const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id))
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
         console.log(`[${documentInfo.id}]无新cmd，不需要生成新版本`)
+        return true
+    }
+    if (cmdList.length < MinCmdCount) {
+        console.log(`[${documentInfo.id}]cmd数量小于${MinCmdCount}，不需要生成新版本`)
         return true
     }
 
@@ -116,7 +127,9 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     const coopRepo = new CoopRepository(document, repo)
 
     try {
+        console_util.disableAllConsole()
         coopRepo.receive(cmdList)
+        console_util.enableAllConsole()
     } catch (err) {
         console.log(`[${documentInfo.id}]generateNewVersion错误：execRemote错误`, err)
         return false
@@ -130,8 +143,8 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
         try {
             const pageSvg = exportSvg(page)
             if (!pageSvg) continue;
-            const pagePngBuffer = await sharp(Buffer.from(pageSvg)).png().toBuffer()
-            pageImageBase64List.push(pagePngBuffer.toString("base64"))
+            // const pagePngBuffer = await sharp(Buffer.from(pageSvg)).png().toBuffer()
+            // pageImageBase64List.push(pagePngBuffer.toString("base64"))
         } catch (err) {
             console.log("导出page图片失败", err)
         }
@@ -200,39 +213,8 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     return true
 }
 
-async function run() {
-    try {
-        await retryMysqlConnect(3)
-    } catch (err) {
-        console.log("mysql连接失败", err)
-        return
-    }
-    await waitMysqlConn()
-
-    try {
-        mongoDBClient = await MongoClient.connect(config.mongodb.url, {
-            useBigInt64: true,
-        })
-    } catch (err) {
-        console.log("mongodb连接失败", err)
-        throw err
-    }
-
-    const storageConfig: typeof config.s3 | typeof config.oss = config.storageType === "oss" ? config.oss : config.s3
-    const storageOptions: StorageOptions = {
-        endPoint: storageConfig.endPoint,
-        region: storageConfig.region,
-        accessKey: storageConfig.accessKeyId,
-        secretKey: storageConfig.secretAccessKey,
-        bucketName: storageConfig.bucketName,
-    }
-    if (config.storageType === "oss") storage = new OssStorage(storageOptions);
-    else storage = new S3Storage(storageOptions);
-}
-
 const app = new Koa()
 const router = new Router()
-app.use(BodyParser())
 
 router.get("/health_check", async (ctx, next) => {
     ctx.body = "success"
@@ -265,9 +247,47 @@ router.post("/generate", async (ctx, next) => {
     }
 })
 
-app.listen(ServerPort, () => {
-    console.log(`manager服务已启动 ${ServerPort}`)
-})
+app.use(BodyParser())
+app.use(router.routes())
+app.use(router.allowedMethods())
+
+async function run() {
+    try {
+        await retryMysqlConnect(3)
+    } catch (err) {
+        console.log("mysql连接失败", err)
+        return
+    }
+    await waitMysqlConn()
+
+    try {
+        mongoDBClient = await MongoClient.connect(config.mongodb.url, {
+            useBigInt64: true,
+        })
+    } catch (err) {
+        console.log("mongodb连接失败", err)
+        throw err
+    }
+
+    const storageConfig: typeof config.s3 | typeof config.oss = config.storageType === "oss" ? config.oss : config.s3
+    const storageOptions: StorageOptions = {
+        endPoint: storageConfig.endPoint,
+        region: storageConfig.region,
+        accessKey: storageConfig.accessKeyId,
+        secretKey: storageConfig.secretAccessKey,
+        bucketName: storageConfig.bucketName,
+    }
+    if (config.storageType === "oss") storage = new OssStorage(storageOptions);
+    else storage = new S3Storage(storageOptions);
+
+    await palInit()
+
+    app.listen(ServerPort, () => {
+        console.log(`manager服务已启动 ${ServerPort}`)
+    })
+}
+
+run()
 
 exit_util.addFun(async () => {
 

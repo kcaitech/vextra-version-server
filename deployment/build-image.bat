@@ -14,8 +14,8 @@ for /f "tokens=1,* delims==" %%a in (.env) do (
 )
 
 docker build %BUILD_ARGS% -t doc-versioning-service:%VERSION_TAG% -f ./Dockerfile ../
-docker tag doc-versioning-service:%VERSION_TAG% docker-registry.protodesign.cn:35000/doc-versioning-service:%VERSION_TAG%
-docker login docker-registry.protodesign.cn:35000 -u kcai -p kcai1212
-docker push docker-registry.protodesign.cn:35000/doc-versioning-service:%VERSION_TAG%
+docker tag doc-versioning-service:%VERSION_TAG% registry.protodesign.cn:36000/kcserver/doc-versioning-service:%VERSION_TAG%
+docker login registry.protodesign.cn:36000 -u admin -p Kcai1212
+docker push registry.protodesign.cn:36000/kcserver/doc-versioning-service:%VERSION_TAG%
 
 endlocal

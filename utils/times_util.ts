@@ -50,6 +50,6 @@ export async function sleepAsync(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export async function sleepAsyncReject(ms: number) {
-    return new Promise((resolve, reject) => setTimeout(reject, ms))
+export async function sleepAsyncReject(ms: number, reason?: any) {
+    return new Promise((resolve, reject) => setTimeout(() => reject(reason), ms))
 }

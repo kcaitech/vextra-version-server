@@ -94,6 +94,7 @@ async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: b
     }
     if (startCmdId !== undefined) findQuery._id["$gte"] = startCmdId;
     if (endCmdId !== undefined) findQuery._id["$lte"] = endCmdId;
+    if (startCmdId === undefined && endCmdId === undefined) delete findQuery._id;
     const findCursor = documentCollection.find(findQuery, {sort: {_id: 1}})
     return await findCursor.toArray() as any as CmdItem[]
 }
@@ -113,13 +114,17 @@ function parseCmdList(cmdItemList: CmdItem[]): Cmd[] {
 const radixRevert = new RadixConvert(62)
 
 class CoopNet implements ICoopNet {
+    private documentId: bigint
+    constructor(documentId: bigint) {
+        this.documentId = documentId
+    }
     hasConnected(): boolean {
         return true;
     }
     async pullCmds(from: string, to: string): Promise<Cmd[]> {
         const startCmdId = from ? radixRevert.to(from) : 0n
         const endCmdId = to ? radixRevert.to(to) : undefined
-        const cmdItemList = await findCmdItem(startCmdId, endCmdId)
+        const cmdItemList = await findCmdItem(this.documentId, startCmdId, endCmdId)
         return parseCmdList(cmdItemList)
     }
     async postCmds(cmds: Cmd[]): Promise<boolean> {
@@ -146,12 +151,12 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     const document = await importDocument(storage, documentInfo.path, "", documentInfo.version_id, repo)
 
     const coopRepo = new CoopRepository(document, repo)
-    coopRepo.setNet(new CoopNet())
+    coopRepo.setNet(new CoopNet(BigInt(documentInfo.id)))
     coopRepo.setBaseVer(radixRevert.from(documentInfo.last_cmd_id))
 
     console_util.disableConsole(console_util.ConsoleType.log)
     try {
-        const timeoutPromise = times_util.sleepAsyncReject(1000 * 10)
+        const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {
             coopRepo.setProcessCmdsTrigger(() => {
                 resolve()
@@ -161,7 +166,7 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
         await Promise.race([p, timeoutPromise])
     } catch (err) {
         console_util.enableConsole(console_util.ConsoleType.log)
-        console.log(`[${documentInfo.id}]generateNewVersion错误：execRemote错误`, err)
+        console.log(`[${documentInfo.id}]generateNewVersion错误：coopRepo.receive错误`, err)
         return false
     }
     console_util.enableConsole(console_util.ConsoleType.log)

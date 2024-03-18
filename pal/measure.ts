@@ -32,7 +32,8 @@ const _tabMetrics = new class implements TextMetrics {
     width: number = 28;
 }
 
-export function measure(code: number, font: string) {
+export function measure(text: string, font: string) {
+    const code = text.charCodeAt(0);
     if (isAsciiCode(code)) {
         if (code === 0x09) return _tabMetrics; // '\t'
         let cache: { [key: string]: TextMetrics | undefined } = _mAsciiCache[font];
@@ -55,5 +56,5 @@ export function measure(code: number, font: string) {
         }
         return m;
     }
-    return measureText(String.fromCharCode(code), font);
+    return measureText(text, font);
 }

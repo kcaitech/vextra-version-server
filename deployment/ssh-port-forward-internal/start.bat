@@ -11,28 +11,8 @@ call add_ssh_key.bat root@192.168.0.18 22
 :: )
 
 :: 定义端口映射规则
-:: 节点ssh
-set ports[0]=2210:172.16.0.10:22
-set ports[1]=2220:172.16.0.20:22
-set ports[2]=2221:172.16.0.21:22
-set ports[3]=2222:172.16.0.22:22
 :: kuboard访问端口
 set ports[4]=30001:172.16.0.20:30001
-:: apiserver访问端口
-set ports[5]=9443:172.16.0.19:9443
-:: docker registry
-set ports[6]=35000:172.16.0.19:35000
-:: docker registry-ui
-set ports[7]=35001:172.16.0.19:35001
-:: bitnami-mariadb
-set ports[8]=30100:172.16.0.19:30100
-:: percona-mongodb
-set ports[9]=30200:172.16.0.19:30200
-:: bitnami-redis
-set ports[10]=30300:172.16.0.19:30300
-set ports[11]=30500:172.16.0.19:30500
-:: documentservice
-set ports[12]=32003:172.16.0.19:32003
 
 :: 获取数组长度
 set length=0

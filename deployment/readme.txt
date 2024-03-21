@@ -31,13 +31,18 @@ kcserver
 在以下页面中可查看包的最新版本号：
 https://packages.aliyun.com/npm/npm-registry/artifacts
 
-5、刷新、打开k8s管理页面：http://k8s-test.protodesign.cn:30001/kubernetes/kcserver/namespace/kc/workload/view/Deployment/doc-versioning-service
+5、在deployment目录中创建.env文件，内容如下：
+NPM_USERNAME=xxx
+NPM_PASSWORD=xxx
+其中NPM_USERNAME和NPM_PASSWORD为codeup npm仓库的账号密码，请自行获取
+
+6、刷新、打开k8s管理页面：http://k8s-test.protodesign.cn:30001/kubernetes/kcserver/namespace/kc/workload/view/Deployment/doc-versioning-service
 右下方查看app容器当前镜像的版本号，例如：`test-0.0.1-23`
 账号密码：
 admin
 kcai1212
 
-6、在cmd命令行进入工程的deployment\app目录，执行build.bat脚本
+7、在cmd命令行进入工程的deployment，执行build.bat脚本
 
 build.bat version-tag
 例如：build.bat test-0.0.1-24，注意版本号不能与历史版本号混淆
@@ -53,8 +58,8 @@ http://registry.protodesign.cn:36000/harbor/projects/2/repositories/doc-versioni
 kcserver
 MEu2o91KHihnuLID6buRGrjRVo9YuM48
 
-7、在k8s管理页面的上方点击“调整镜像版本”按钮，输入新的版本号，例如：`test-0.0.1-24`，点击“确定”
+8、在k8s管理页面的上方点击“调整镜像版本”按钮，输入新的版本号，例如：`test-0.0.1-24`，点击“确定”
 等待页面刷新，查看左侧“历史版本”栏目，确认新版本已发布，并等待新版本的容器状态变为“Ready”（变成绿色即可）
 
-8、在k8s管理页面左侧的“历史版本”栏目中可对历史版本进行回滚操作，点击“回滚到”按钮并确认即可。
+9、在k8s管理页面左侧的“历史版本”栏目中可对历史版本进行回滚操作，点击“回滚到”按钮并确认即可。
 若历史版本中不存在“回滚到”按钮，可点击上方的刷新按钮后再试

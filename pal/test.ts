@@ -58,7 +58,7 @@ function testTextToPath(font: string, fontSize: number, charCode: number) {
 testTextToPath("宋体", 16, "啊".codePointAt(0)!)
 
 function testMeasure() {
-    const res = measure("g".codePointAt(0)!, "16px 宋体")
+    const res = measure("g", "16px 宋体")
     console.log(res)
 }
 

@@ -12,7 +12,7 @@ call add_ssh_key.bat root@192.168.0.18 22
 
 :: 定义端口映射规则
 :: kuboard访问端口
-set ports[4]=30001:172.16.0.20:30001
+set ports[0]=30001:172.16.0.20:30001
 
 :: 获取数组长度
 set length=0

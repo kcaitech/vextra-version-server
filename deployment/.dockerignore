@@ -1,6 +1,0 @@
-**/schema
-*.md
-**/README.md
-dist
-dist_*
-node_modules

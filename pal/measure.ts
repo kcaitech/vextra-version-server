@@ -23,6 +23,11 @@ function isAsciiCode(code: number) {
 const _mEWCCache: { [key: string]: TextMetrics | undefined } = {};
 const _mAsciiCache: { [key: string]: { [key: string]: TextMetrics | undefined } } = {};
 const _tabMetrics = new class implements TextMetrics {
+    alphabeticBaseline: number = 0;
+    emHeightAscent: number = 0;
+    emHeightDescent: number = 0;
+    hangingBaseline: number = 0;
+    ideographicBaseline: number = 0;
     actualBoundingBoxAscent: number = 0;
     actualBoundingBoxDescent: number = 0;
     actualBoundingBoxLeft: number = 0;

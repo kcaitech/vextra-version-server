@@ -313,8 +313,7 @@ async function run() {
         secretKey: storageConfig.secretAccessKey,
         bucketName: storageConfig.bucketName,
     }
-    if (config.storageType === "oss") storage = new OssStorage(storageOptions);
-    else storage = new S3Storage(storageOptions);
+    storage = config.storageType === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
 
     await palInit()
 

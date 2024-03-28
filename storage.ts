@@ -78,7 +78,7 @@ export class OssStorage implements IStorage {
 
     constructor(options: StorageOptions) {
         this.client = new OSS({
-            endpoint: options.endPoint,
+            endpoint: `${options.bucketName}.${options.endPoint}`,
             region: options.region,
             accessKeyId: options.accessKey,
             accessKeySecret: options.secretKey,
@@ -107,7 +107,10 @@ export class OssStorage implements IStorage {
         try {
             result = await this._get(uri, versionId)
         } catch (err) {
-            result = await this._get(uri).catch(() => new Uint8Array())
+            result = await this._get(uri).catch(() => {
+                // console.log("storage.get错误", uri, err)
+                return new Uint8Array()
+            })
         }
         return result
     }

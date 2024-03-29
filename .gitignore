@@ -15,3 +15,6 @@ yarn.lock
 /success.log
 /all.log
 /error.log
+
+/test/svg-to-png/*/*.png
+/test/svg-to-png/*/*.txt

@@ -28,7 +28,7 @@ spec:
             secretName: doc-versioning-service-config
       containers:
         - name: app
-          image: docker-registry.protodesign.cn:35000/doc-versioning-service:test-0.0.1
+          image: registry.protodesign.cn:36000/kcserver/doc-versioning-service:test-0.0.1
           imagePullPolicy: Always
           env:
             - name: TZ

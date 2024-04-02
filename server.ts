@@ -14,7 +14,6 @@ import {
 import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
 import config from "./config"
 import {init as palInit} from "./pal/init"
-import sharp from "sharp"
 import {OssStorage, S3Storage, StorageOptions} from "./storage"
 import * as exit_util from "./utils/exit_util"
 import * as console_util from "./utils/console_util"

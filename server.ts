@@ -22,6 +22,8 @@ import {WebSocket} from "ws"
 import Koa from "koa"
 import Router from "koa-router"
 import BodyParser from "koa-bodyparser"
+import axios from "axios"
+import FormData from "form-data"
 
 console_util.objectToStr()
 
@@ -132,6 +134,29 @@ class CoopNet implements ICoopNet {
     watchCmds(watcher: (cmds: Cmd[]) => void): void {
 
     }
+
+    watchError(watcher: (errorInfo: any) => void): void {
+
+    }
+}
+
+async function svgToPng(svgContent: string): Promise<Buffer> {
+    const svgBuffer = Buffer.from(svgContent, "utf-8")
+
+    const form = new FormData()
+    form.append("svg", svgBuffer, {
+        filename: "image.svg",
+        contentType: "image/svg+xml",
+    })
+
+    const response = await axios.post<Buffer>("http://172.16.0.21:10050/svg_to_png", form, {
+        headers: {
+            ...form.getHeaders()
+        },
+        responseType: "arraybuffer",
+    })
+
+    return response.data
 }
 
 async function generateNewVersion(documentInfo: Document): Promise<boolean> {
@@ -178,8 +203,8 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
         try {
             const pageSvg = exportSvg(page)
             if (!pageSvg) continue;
-            // const pagePngBuffer = await sharp(Buffer.from(pageSvg)).png().toBuffer()
-            // pageImageBase64List.push(pagePngBuffer.toString("base64"))
+            const pagePngBuffer = await svgToPng(pageSvg)
+            pageImageBase64List.push(pagePngBuffer.toString("base64"))
         } catch (err) {
             console.log("导出page图片失败", err)
         }

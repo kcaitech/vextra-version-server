@@ -155,6 +155,10 @@ async function svgToPng(svgContent: string): Promise<Buffer> {
         },
         responseType: "arraybuffer",
     })
+    if (response.status !== 200) {
+        console.log("svgToPng错误", response.status, response.data)
+        throw new Error("svgToPng错误")
+    }
 
     return response.data
 }

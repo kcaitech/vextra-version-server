@@ -149,11 +149,12 @@ async function svgToPng(svgContent: string): Promise<Buffer> {
         contentType: "image/svg+xml",
     })
 
-    const response = await axios.post<Buffer>("http://172.16.0.21:10050/svg_to_png", form, {
+    const response = await axios.post<Buffer>("http://svg-to-png.kc.svc.cluster.local:10050/svg_to_png", form, {
         headers: {
             ...form.getHeaders()
         },
         responseType: "arraybuffer",
+        timeout: 1000 * 10,
     })
     if (response.status !== 200) {
         console.log("svgToPng错误", response.status, response.data)

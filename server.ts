@@ -214,10 +214,9 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
             .map(shape => shape.imageRef)
         )
     }
-    const imagePromiseList = imageRefList.map(ref => document.mediasMgr.get(ref))
-    const allPromise = Promise.allSettled(imagePromiseList).catch(err => {})
+    const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => {})
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
-    await Promise.race([allPromise, timeoutPromise])
+    await Promise.race([imageAllLoadPromise, timeoutPromise])
 
     const pageImageBase64List: string[] = []
     for (const page of pageList) {

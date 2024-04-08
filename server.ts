@@ -9,7 +9,7 @@ import {
     RadixConvert,
     Repository,
     parseCmds,
-    ICoopNet,
+    ICoopNet, ImageShape, Page,
 } from "@kcdesign/data"
 import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
 import config from "./config"
@@ -24,6 +24,8 @@ import Router from "koa-router"
 import BodyParser from "koa-bodyparser"
 import axios from "axios"
 import FormData from "form-data"
+import {ShapeType} from "@kcdesign/data/dist/data/typesdefine";
+import {sleepAsync} from "./utils/times_util";
 
 console_util.objectToStr()
 
@@ -201,10 +203,24 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     console_util.enableConsole(console_util.ConsoleType.log)
 
     // 导出page图片
-    const pageImageBase64List: string[] = []
+    const pageList: Page[] = []
+    const imageRefList: string[] = []
     for (const _page of document.pagesList) {
         const page = await document.pagesMgr.get(_page.id);
         if (!page) continue;
+        pageList.push(page)
+        imageRefList.push(...(Array.from(page.shapes.values())
+            .filter(shape => shape.type === ShapeType.Image) as ImageShape[])
+            .map(shape => shape.imageRef)
+        )
+    }
+    const imagePromiseList = imageRefList.map(ref => document.mediasMgr.get(ref))
+    const allPromise = Promise.allSettled(imagePromiseList).catch(err => {})
+    const timeoutPromise = times_util.sleepAsync(1000 * 60)
+    await Promise.race([allPromise, timeoutPromise])
+
+    const pageImageBase64List: string[] = []
+    for (const page of pageList) {
         try {
             const pageSvg = exportSvg(page)
             if (!pageSvg) continue;

@@ -63,7 +63,14 @@ export function objectToStr(options?: {
         c[item] = function (...args: any[]) {
             const setting = Setting[item as ConsoleTypeStr]
             if (!setting.enable) return;
-            const content = args.map(item => typeof item === "object" ? util.inspect(item, true, null, false) : item).join(" ")
+            const content = args.map(item => typeof item === "object" ? util.inspect(item, {
+                showHidden: false,
+                depth: null,
+                colors: false,
+                maxArrayLength: null,
+                breakLength: 120,
+                compact: false,
+            }) : item).join(" ")
             if (options?.beforeHandler && !options.beforeHandler(item as ConsoleTypeStr, content)) return;
             const nowFormat = times_utils.getDateTimeWithMs()
             originalConsole.call(console, nowFormat, ...args.map(item => typeof item === "object" ? util.inspect(item, true, null, false) : item))

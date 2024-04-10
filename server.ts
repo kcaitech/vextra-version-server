@@ -25,7 +25,6 @@ import BodyParser from "koa-bodyparser"
 import axios from "axios"
 import FormData from "form-data"
 import {ShapeType} from "@kcdesign/data/dist/data/typesdefine";
-import {sleepAsync} from "./utils/times_util";
 
 console_util.objectToStr()
 

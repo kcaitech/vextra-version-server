@@ -184,7 +184,7 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     coopRepo.setNet(new CoopNet(BigInt(documentInfo.id)))
     coopRepo.setBaseVer(radixRevert.from(documentInfo.last_cmd_id))
 
-    console_util.disableConsole(console_util.ConsoleType.log)
+    // console_util.disableConsole(console_util.ConsoleType.log)
     try {
         const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {

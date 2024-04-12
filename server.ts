@@ -9,7 +9,10 @@ import {
     RadixConvert,
     Repository,
     parseCmds,
-    ICoopNet, ImageShape, Page,
+    ICoopNet,
+    ImageShape,
+    Page,
+    ShapeType,
 } from "@kcdesign/data"
 import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
 import config from "./config"
@@ -24,7 +27,6 @@ import Router from "koa-router"
 import BodyParser from "koa-bodyparser"
 import axios from "axios"
 import FormData from "form-data"
-import {ShapeType} from "@kcdesign/data/dist/data/typesdefine";
 
 console_util.objectToStr()
 
@@ -166,7 +168,7 @@ async function svgToPng(svgContent: string): Promise<Buffer> {
 }
 
 async function generateNewVersion(documentInfo: Document): Promise<boolean> {
-    const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id))
+    const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
         console.log(`[${documentInfo.id}]无新cmd，不需要生成新版本`)

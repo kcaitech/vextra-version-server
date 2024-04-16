@@ -1,5 +1,5 @@
 import { Path2D } from "skia-canvas";
-import { IPalPath } from "@kcdesign/data";
+import { IPalPath, StrokeOpts } from "@kcdesign/data";
 
 export async function init() {
 }
@@ -33,6 +33,9 @@ export function union(path0: string, path1: string): string {
     // console.log("union", result);
     return result.d;
 }
+export function stroke(ops?: StrokeOpts): string {
+    throw new Error("not implemented")
+}
 
 export class PalPath implements IPalPath {
     private _path: Path2D;
@@ -54,6 +57,10 @@ export class PalPath implements IPalPath {
     union(path: PalPath): boolean {
         this._path = this._path.union(path._path);
         return true;
+    }
+    stroke(ops?: StrokeOpts): string {
+        // throw new Error("not implemented")
+        return this.toSVGString();
     }
     addPath(path: PalPath): boolean {
         this._path.addPath(path._path);

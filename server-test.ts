@@ -126,7 +126,7 @@ class CoopNet implements ICoopNet {
 }
 
 async function generateNewVersion(documentInfo: Document): Promise<boolean> {
-    const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
+    const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id))
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
         console.log(`[${documentInfo.id}]无新cmd，不需要生成新版本`)

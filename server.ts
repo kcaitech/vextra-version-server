@@ -22,6 +22,7 @@ import {WebSocket} from "ws"
 import Koa from "koa"
 import Router from "koa-router"
 import BodyParser from "koa-bodyparser"
+import Static from "koa-static"
 import axios from "axios"
 import FormData from "form-data"
 import {ShapeType} from "@kcdesign/data/dist/data/typesdefine";
@@ -329,6 +330,7 @@ router.post("/generate", async (ctx, next) => {
 app.use(BodyParser())
 app.use(router.routes())
 app.use(router.allowedMethods())
+app.use(Static("/app/static"))
 
 async function run() {
     try {

@@ -1,74 +1,152 @@
-import { Path2D } from "skia-canvas";
-import { IPalPath, StrokeOpts } from "@kcdesign/data";
+import { IPalPath } from "@kcdesign/data";
+import {StrokeOpts} from "@kcdesign/data/dist/basic/pal";
 
+const PathKitInit = require('pathkit-wasm/bin/pathkit.js');
+
+// - `PathKit.PathOp.DIFFERENCE`
+// - `PathKit.PathOp.INTERSECT`
+// - `PathKit.PathOp.REVERSE_DIFFERENCE`
+// - `PathKit.PathOp.UNION`
+// - `PathKit.PathOp.XOR`
+
+// enum SkPathOp {
+//     kDifference_SkPathOp,         //!< subtract the op path from the first path
+//     kIntersect_SkPathOp,          //!< intersect the two paths
+//     kUnion_SkPathOp,              //!< union (inclusive-or) the two paths
+//     kXOR_SkPathOp,                //!< exclusive-or the two paths
+//     kReverseDifference_SkPathOp,  //!< subtract the first path from the op path
+// }
+
+enum PathKitOp {
+    DIFFERENCE,
+    INTERSECT,
+    UNION,
+    XOR,
+    REVERSE_DIFFERENCE,
+}
+
+interface PathKit {
+    PathOp: {
+        DIFFERENCE: PathKitOp.DIFFERENCE,
+        INTERSECT: PathKitOp.INTERSECT,
+        UNION: PathKitOp.UNION,
+        XOR: PathKitOp.XOR,
+        REVERSE_DIFFERENCE: PathKitOp.REVERSE_DIFFERENCE,
+    };
+    FromSVGString(str: string): PathKitPath;
+}
+
+interface PathKitPath {
+    toSVGString(): string;
+    op(path: PathKitPath, op: PathKitOp): boolean;
+    delete(): void;
+    addPath(otherPath: PathKitPath): PathKitPath;
+}
+
+const ServerPort = 10040 // 10040
+let _ck: PathKit;
 export async function init() {
+    if (_ck) return;
+    _ck = await PathKitInit({
+        locateFile: (file: string) => `http://localhost:${ServerPort}/` + file
+    })
 }
 
 export function difference(path0: string, path1: string): string {
-    const p0: Path2D = new Path2D(path0);
-    const p1: Path2D = new Path2D(path1);
-    const result = p0.xor(p1);
-    // console.log("difference", result);
-    return result.d;
+    if (!_ck) throw Error("Not init");
+    const p0: PathKitPath = _ck.FromSVGString(path0);
+    const p1: PathKitPath = _ck.FromSVGString(path1);
+    if (p0 && p1) {
+        p0.op(p1, _ck.PathOp.XOR)
+        const path = p0.toSVGString();
+        p0.delete();
+        p1.delete();
+        return path;
+    }
+    console.log("difference op failed")
+    return "";
 }
 export function intersection(path0: string, path1: string): string {
-    const p0: Path2D = new Path2D(path0);
-    const p1: Path2D = new Path2D(path1);
-    const result = p0.intersect(p1);
-    // console.log("intersect", result);
-    return result.d;
+    if (!_ck) throw Error("Not init");
+    const p0: PathKitPath = _ck.FromSVGString(path0);
+    const p1: PathKitPath = _ck.FromSVGString(path1);
+    if (p0 && p1) {
+        p0.op(p1, _ck.PathOp.INTERSECT)
+        const path = p0.toSVGString();
+        p0.delete();
+        p1.delete();
+        return path;
+    }
+    console.log("intersect op failed")
+    return "";
 }
 export function subtract(path0: string, path1: string): string {
-    const p0: Path2D = new Path2D(path0);
-    const p1: Path2D = new Path2D(path1);
-    // p0.contains()
-    const result = p0.difference(p1);
-    // console.log("difference", result);
-    return result.d;
+    if (!_ck) throw Error("Not init");
+    const p0: PathKitPath = _ck.FromSVGString(path0);
+    const p1: PathKitPath = _ck.FromSVGString(path1);
+    if (p0 && p1) {
+        p0.op(p1, _ck.PathOp.DIFFERENCE)
+        const path = p0.toSVGString();
+        p0.delete();
+        p1.delete();
+        return path;
+    }
+    console.log("subtract op failed")
+    return "";
 }
 export function union(path0: string, path1: string): string {
-    const p0: Path2D = new Path2D(path0);
-    const p1: Path2D = new Path2D(path1);
-    const result = p0.union(p1);
-    // console.log("union", result);
-    return result.d;
+    if (!_ck) throw Error("Not init");
+    const p0: PathKitPath = _ck.FromSVGString(path0);
+    const p1: PathKitPath = _ck.FromSVGString(path1);
+    if (p0 && p1) {
+        p0.op(p1, _ck.PathOp.UNION)
+        const path = p0.toSVGString();
+        p0.delete();
+        p1.delete();
+        return path;
+    }
+    console.log("union op failed")
+    return "";
 }
+
 export function stroke(ops?: StrokeOpts): string {
-    throw new Error("not implemented")
+    return "";
 }
 
 export class PalPath implements IPalPath {
-    private _path: Path2D;
+    private _path: PathKitPath;
     constructor(path: string) {
-        this._path = new Path2D(path);
+        if (!_ck) throw Error("Not init");
+        this._path = _ck.FromSVGString(path);
     }
+    // @ts-ignore
     difference(path: PalPath): boolean {
-        this._path = this._path.xor(path._path);
-        return true;
+        return this._path.op((path)._path, _ck.PathOp.XOR);
     }
+    // @ts-ignore
     intersection(path: PalPath): boolean {
-        this._path = this._path.intersect(path._path);
-        return true;
+        return this._path.op((path)._path, _ck.PathOp.INTERSECT);
     }
+    // @ts-ignore
     subtract(path: PalPath): boolean {
-        this._path = this._path.difference(path._path);
-        return true;
+        return this._path.op((path)._path, _ck.PathOp.DIFFERENCE);
     }
+    // @ts-ignore
     union(path: PalPath): boolean {
-        this._path = this._path.union(path._path);
-        return true;
+        return this._path.op((path)._path, _ck.PathOp.UNION);
     }
-    stroke(ops?: StrokeOpts): string {
-        // throw new Error("not implemented")
-        return this.toSVGString();
-    }
+    // @ts-ignore
     addPath(path: PalPath): boolean {
         this._path.addPath(path._path);
         return true;
     }
     toSVGString(): string {
-        return this._path.d;
+        return this._path.toSVGString();
     }
     delete(): void {
+        this._path.delete();
+    }
+    stroke(ops?: StrokeOpts): string {
+        return "";
     }
 }

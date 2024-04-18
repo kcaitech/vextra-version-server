@@ -40,6 +40,7 @@
     "**/*.test.tsx",
     "node_modules",
     "dist",
-    "deployment"
+    "deployment",
+    "test"
   ]
 }

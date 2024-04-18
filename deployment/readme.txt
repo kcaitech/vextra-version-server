@@ -47,6 +47,10 @@ kcai1212
 build.bat version-tag
 例如：build.bat test-0.0.1-24，注意版本号不能与历史版本号混淆
 
+若提示不存在doc-versioning-service-node20-alpine-builder:latest、doc-versioning-service-node20-slim-builder:latest等镜像，需先执行以下命令：
+pre-build.bat
+待执行完毕后再执行build.bat
+
 执行完毕后注意仔细查看打包时输出的信息，确认：
 （1）npm编译成功
 （2）docker镜像编译成功

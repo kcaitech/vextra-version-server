@@ -3,16 +3,12 @@ import {
     Cmd,
     CoopRepository,
     exportExForm,
-    exportSvg,
+    ICoopNet,
     importDocument,
     IStorage,
+    parseCmds,
     RadixConvert,
     Repository,
-    parseCmds,
-    ICoopNet,
-    ImageShape,
-    Page,
-    ShapeType,
 } from "@kcdesign/data"
 import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
 import config from "./config"
@@ -21,25 +17,9 @@ import {OssStorage, S3Storage, StorageOptions} from "./storage"
 import * as exit_util from "./utils/exit_util"
 import * as console_util from "./utils/console_util"
 import * as times_util from "./utils/times_util"
-import {WebSocket} from "ws"
-import Koa from "koa"
-import Router from "koa-router"
-import BodyParser from "koa-bodyparser"
-import Static from "koa-static"
-import axios from "axios"
-import FormData from "form-data"
+import * as fs from "fs";
 
 console_util.objectToStr()
-
-// 触发生成新版本的最小cmd数量
-const MinCmdCount = 100
-
-const ServerPort = 10040
-
-const DOCUMENT_SERVICE_HOST = config.documentService.host
-const API_VERSION_PATH = "/api/v1"
-const DOCUMENT_UPLOAD_PATH = "/documents/document_upload"
-const DOCUMENT_UPLOAD_URL = `ws://${DOCUMENT_SERVICE_HOST}${API_VERSION_PATH}${DOCUMENT_UPLOAD_PATH}`
 
 let mongoDBClient: MongoClient
 let storage: IStorage
@@ -90,6 +70,7 @@ type CmdItem = {
 }
 
 async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: bigint): Promise<CmdItem[]> {
+    console.log("findCmdItem", documentId, startCmdId, endCmdId)
     let mongoDB = mongoDBClient.db("kcserver")
     if (startCmdId === undefined && endCmdId === undefined) return Promise.resolve([]);
     const documentCollection = mongoDB.collection("document1")
@@ -144,39 +125,11 @@ class CoopNet implements ICoopNet {
     }
 }
 
-async function svgToPng(svgContent: string): Promise<Buffer> {
-    const svgBuffer = Buffer.from(svgContent, "utf-8")
-
-    const form = new FormData()
-    form.append("svg", svgBuffer, {
-        filename: "image.svg",
-        contentType: "image/svg+xml",
-    })
-
-    const response = await axios.post<Buffer>("http://svg-to-png.kc.svc.cluster.local:10050/svg_to_png", form, {
-        headers: {
-            ...form.getHeaders()
-        },
-        responseType: "arraybuffer",
-        timeout: 1000 * 10,
-    })
-    if (response.status !== 200) {
-        console.log("svgToPng错误", response.status, response.data)
-        throw new Error("svgToPng错误")
-    }
-
-    return response.data
-}
-
 async function generateNewVersion(documentInfo: Document): Promise<boolean> {
-    const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
+    const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id))
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
         console.log(`[${documentInfo.id}]无新cmd，不需要生成新版本`)
-        return true
-    }
-    if (cmdList.length < MinCmdCount) {
-        console.log(`[${documentInfo.id}]cmd数量小于${MinCmdCount}，不需要生成新版本`)
         return true
     }
 
@@ -187,7 +140,7 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     coopRepo.setNet(new CoopNet(BigInt(documentInfo.id)))
     coopRepo.setBaseVer(radixRevert.from(documentInfo.last_cmd_id))
 
-    // console_util.disableConsole(console_util.ConsoleType.log)
+    console_util.disableConsole(console_util.ConsoleType.log)
     try {
         const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {
@@ -204,88 +157,10 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     }
     console_util.enableConsole(console_util.ConsoleType.log)
 
-    // 导出page图片
-    const pageList: Page[] = []
-    const imageRefList: string[] = []
-    for (const _page of document.pagesList) {
-        const page = await document.pagesMgr.get(_page.id);
-        if (!page) continue;
-        pageList.push(page)
-        imageRefList.push(...(Array.from(page.shapes.values())
-            .filter(shape => shape.type === ShapeType.Image) as ImageShape[])
-            .map(shape => shape.imageRef)
-        )
-    }
-    const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => {})
-    const timeoutPromise = times_util.sleepAsync(1000 * 60)
-    await Promise.race([imageAllLoadPromise, timeoutPromise])
-
-    const pageImageBase64List: string[] = []
-    for (const page of pageList) {
-        try {
-            const pageSvg = exportSvg(page)
-            if (!pageSvg) continue;
-            const pagePngBuffer = await svgToPng(pageSvg)
-            pageImageBase64List.push(pagePngBuffer.toString("base64"))
-        } catch (err) {
-            console.log("导出page图片失败", err)
-        }
-    }
-
     try {
         const documentData = await exportExForm(document)
-        const ws = new WebSocket(DOCUMENT_UPLOAD_URL)
-        await new Promise<void>((resolve, reject) => {
-            ws.onopen = _ => resolve()
-            ws.onerror = err => reject(err)
-        })
-        ws.binaryType = "arraybuffer"
-        const lastCmdId = cmdItemList[cmdItemList.length - 1]._id.toString(10)
-        let mediasSize = 0
-        for (let i = 0, len = documentData.media_names.length; i < len; i++) {
-            const buffer = await document.mediasMgr.get(documentData.media_names[i])
-            if (buffer !== undefined) mediasSize += buffer.buff.byteLength;
-        }
-        const documentText = await document.getText()
-        ws.send(JSON.stringify({
-            document_id: documentInfo.id,
-            last_cmd_id: lastCmdId,
-        }))
-        ws.send(JSON.stringify({
-            ...documentData,
-            medias_size: mediasSize,
-            document_text: documentText,
-            page_image_base64_list: pageImageBase64List,
-        }))
-        const versionId = await new Promise<string>((resolve, reject) => {
-            let isClosed = false
-            ws.onmessage = ((event) => {
-                if (isClosed) return;
-                try {
-                    const data = JSON.parse(event.data as string)
-                    const status = data.status
-                    const versionId = data.data?.version_id
-                    if (status !== "success" || !versionId) {
-                        console.log(`[${documentInfo.id}]generateNewVersion错误：document upload fail`, data)
-                        reject()
-                        return
-                    }
-                    resolve(versionId)
-                } catch (e) {
-                    console.log(`[${documentInfo.id}]generateNewVersion错误：document upload fail`, e)
-                    reject()
-                }
-                isClosed = true
-                ws.close()
-            })
-            setTimeout(() => {
-                if (isClosed) return;
-                console.log(`[${documentInfo.id}]generateNewVersion错误：document upload timeout`)
-                reject()
-                isClosed = true
-                ws.close()
-            }, 1000 * 10)
-        })
+        const documentDataJson = JSON.stringify(documentData)
+        fs.writeFileSync(`./${documentInfo.id}.json`, documentDataJson)
     } catch (err) {
         console.log(`[${documentInfo.id}]generateNewVersion错误：上传错误`, err)
         return false
@@ -295,51 +170,15 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     return true
 }
 
-const app = new Koa()
-const router = new Router()
-
-router.get("/health_check", async (ctx, next) => {
-    if (!palInitFinished) {
-        ctx.status = 500
-        ctx.body = "初始化未完成"
-        return
-    }
-    ctx.body = "success"
-})
-
-router.post("/generate", async (ctx, next) => {
-    const reqParams = ctx.request.body as any
-    let documentId = reqParams.documentId
-    if (!documentId) {
-        ctx.status = 400
-        ctx.body = "参数错误"
-        return
-    }
-    documentId = documentId + ""
-    console.log("generate", documentId)
-
+async function test() {
+    const documentId = "336095522538405888"
     const documentInfo = await getDocument(documentId)
     if (!documentInfo) {
-        ctx.status = 400
-        ctx.body = "document不存在"
+        console.log("document不存在")
         return
     }
-
-    const result = await generateNewVersion(documentInfo)
-    if (result) {
-        ctx.body = "success"
-    } else {
-        ctx.status = 500
-        ctx.body = "error"
-    }
-})
-
-app.use(BodyParser())
-app.use(router.routes())
-app.use(router.allowedMethods())
-app.use(Static("/app/static"))
-
-let palInitFinished = false
+    await generateNewVersion(documentInfo)
+}
 
 async function run() {
     try {
@@ -369,10 +208,10 @@ async function run() {
     }
     storage = config.storageType === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
 
-    app.listen(ServerPort, () => {
-        console.log(`manager服务已启动 ${ServerPort}`)
-        palInit().then(() => palInitFinished = true).catch(err => console.log("palInit错误", err))
-    })
+    await palInit()
+
+    await test()
+    await exit_util.exit()
 }
 
 run()

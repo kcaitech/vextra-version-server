@@ -14,7 +14,7 @@ async function testPath() {
     const ctx = canvas.getContext("2d")
 
     await boolop.init()
-    const res = boolop.union(path1, path2)
+    const res = boolop.subtract(path1, path2)
     ctx.beginPath()
     ctx.fillStyle = "red"
     ctx.fill(new Path2D(res))
@@ -24,7 +24,7 @@ async function testPath() {
     fs.writeFileSync("testPath.png", pngData)
 }
 
-// testPath()
+testPath()
 
 function testTextToPath(font: string, fontSize: number, charCode: number) {
     fontSize = Math.round(fontSize)
@@ -55,7 +55,7 @@ function testTextToPath(font: string, fontSize: number, charCode: number) {
     console.log(path)
 }
 
-testTextToPath("宋体", 16, "啊".codePointAt(0)!)
+// testTextToPath("宋体", 16, "啊".codePointAt(0)!)
 
 function testMeasure() {
     const res = measure("g", "16px 宋体")

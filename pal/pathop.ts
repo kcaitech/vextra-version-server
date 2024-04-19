@@ -1,5 +1,4 @@
 import { IPalPath } from "@kcdesign/data";
-import {StrokeOpts} from "@kcdesign/data/dist/basic/pal";
 
 const PathKitInit = require('pathkit-wasm/bin/pathkit.js');
 
@@ -24,6 +23,17 @@ enum PathKitOp {
     XOR,
     REVERSE_DIFFERENCE,
 }
+enum Join {
+    "MITER",
+    "ROUND",
+    "BEVEL"
+}
+
+enum Cap {
+    "BUTT",
+    "ROUND",
+    "SQUARE",
+}
 
 interface PathKit {
     PathOp: {
@@ -32,8 +42,43 @@ interface PathKit {
         UNION: PathKitOp.UNION,
         XOR: PathKitOp.XOR,
         REVERSE_DIFFERENCE: PathKitOp.REVERSE_DIFFERENCE,
-    };
-    FromSVGString(str: string): PathKitPath;
+    }
+    FromSVGString(str: string): PathKitPath
+}
+
+// enum class SkPathFillType {
+//     /** Specifies that "inside" is computed by a non-zero sum of signed edge crossings */
+//     kWinding,
+//     /** Specifies that "inside" is computed by an odd number of edge crossings */
+//     kEvenOdd,
+//     /** Same as Winding, but draws outside of the path, rather than inside */
+//     kInverseWinding,
+//     /** Same as EvenOdd, but draws outside of the path, rather than inside */
+//     kInverseEvenOdd
+// };
+
+// enum_<SkPathFillType>("FillType")
+// .value("WINDING",            SkPathFillType::kWinding)
+// .value("EVENODD",            SkPathFillType::kEvenOdd)
+// .value("INVERSE_WINDING",    SkPathFillType::kInverseWinding)
+// .value("INVERSE_EVENODD",    SkPathFillType::kInverseEvenOdd);
+
+enum FillType {
+    "WINDING",
+    "EVENODD",
+    "INVERSE_WINDING",
+    "INVERSE_EVENODD"
+}
+
+interface StrokeOpts {
+    // Default values are set in chaining.js which allows clients
+    // to set any number of them. Otherwise, the binding code complains if
+    // any are omitted.
+    width?: number;
+    miter_limit?: number;
+    res_scale?: number;
+    join?: Join;
+    cap?: Cap;
 }
 
 interface PathKitPath {
@@ -41,14 +86,36 @@ interface PathKitPath {
     op(path: PathKitPath, op: PathKitOp): boolean;
     delete(): void;
     addPath(otherPath: PathKitPath): PathKitPath;
+    stroke(ops?: StrokeOpts): PathKitPath | null;
+    setFillType(type: FillType): void;
+    simplify(): PathKitPath | null;
 }
 
-const ServerPort = 10040 // 10040
+//     // Stroke
+// enum_<SkPaint::Join>("StrokeJoin")
+//     .value("MITER", SkPaint::Join::kMiter_Join)
+//     .value("ROUND", SkPaint::Join::kRound_Join)
+//     .value("BEVEL", SkPaint::Join::kBevel_Join);
+
+// enum_<SkPaint::Cap>("StrokeCap")
+//     .value("BUTT",   SkPaint::Cap::kButt_Cap)
+//     .value("ROUND",  SkPaint::Cap::kRound_Cap)
+//     .value("SQUARE", SkPaint::Cap::kSquare_Cap);
+
+// value_object<StrokeOpts>("StrokeOpts")
+//     .field("width",       &StrokeOpts::width)
+//     .field("miter_limit", &StrokeOpts::miter_limit)
+//     .field("res_scale",   &StrokeOpts::res_scale)
+//     .field("join",        &StrokeOpts::join)
+//     .field("cap",         &StrokeOpts::cap);
+
+
+
 let _ck: PathKit;
 export async function init() {
     if (_ck) return;
     _ck = await PathKitInit({
-        locateFile: (file: string) => `http://localhost:${ServerPort}/` + file
+        locateFile: (file: string) => file
     })
 }
 
@@ -108,9 +175,17 @@ export function union(path0: string, path1: string): string {
     console.log("union op failed")
     return "";
 }
-
 export function stroke(ops?: StrokeOpts): string {
-    return "";
+    throw new Error("not implemented")
+}
+export function noneZero2evenOdd(path: string): string {
+    if (!_ck) throw Error("Not init");
+    const p0: PathKitPath = _ck.FromSVGString(path);
+    p0.setFillType(FillType.WINDING);
+    const p1 = p0.simplify(); // return this
+    const ret = p1 ? p1.toSVGString() : "";
+    p0.delete();
+    return ret;
 }
 
 export class PalPath implements IPalPath {
@@ -119,23 +194,23 @@ export class PalPath implements IPalPath {
         if (!_ck) throw Error("Not init");
         this._path = _ck.FromSVGString(path);
     }
-    // @ts-ignore
     difference(path: PalPath): boolean {
         return this._path.op((path)._path, _ck.PathOp.XOR);
     }
-    // @ts-ignore
     intersection(path: PalPath): boolean {
         return this._path.op((path)._path, _ck.PathOp.INTERSECT);
     }
-    // @ts-ignore
     subtract(path: PalPath): boolean {
         return this._path.op((path)._path, _ck.PathOp.DIFFERENCE);
     }
-    // @ts-ignore
     union(path: PalPath): boolean {
         return this._path.op((path)._path, _ck.PathOp.UNION);
     }
-    // @ts-ignore
+    stroke(ops?: StrokeOpts) {
+        const path = this._path.stroke(ops); // return this
+        const ret = path ? path.toSVGString() : "";
+        return ret;
+    }
     addPath(path: PalPath): boolean {
         this._path.addPath(path._path);
         return true;
@@ -145,8 +220,5 @@ export class PalPath implements IPalPath {
     }
     delete(): void {
         this._path.delete();
-    }
-    stroke(ops?: StrokeOpts): string {
-        return this.toSVGString();
     }
 }

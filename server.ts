@@ -369,7 +369,7 @@ async function run() {
 
     app.listen(ServerPort, () => {
         console.log(`manager服务已启动 ${ServerPort}`)
-        palInit().then(() => palInitFinished = true)
+        palInit().then(() => palInitFinished = true).catch(err => console.log("palInit错误", err))
     })
 }
 

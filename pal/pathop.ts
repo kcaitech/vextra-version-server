@@ -147,6 +147,6 @@ export class PalPath implements IPalPath {
         this._path.delete();
     }
     stroke(ops?: StrokeOpts): string {
-        return "";
+        return this.toSVGString();
     }
 }

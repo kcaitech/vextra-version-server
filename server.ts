@@ -297,6 +297,11 @@ const app = new Koa()
 const router = new Router()
 
 router.get("/health_check", async (ctx, next) => {
+    if (!palInitFinished) {
+        ctx.status = 500
+        ctx.body = "初始化未完成"
+        return
+    }
     ctx.body = "success"
 })
 
@@ -332,6 +337,8 @@ app.use(router.routes())
 app.use(router.allowedMethods())
 app.use(Static("/app/static"))
 
+let palInitFinished = false
+
 async function run() {
     try {
         await retryMysqlConnect(3)
@@ -360,10 +367,9 @@ async function run() {
     }
     storage = config.storageType === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
 
-    await palInit()
-
     app.listen(ServerPort, () => {
         console.log(`manager服务已启动 ${ServerPort}`)
+        palInit().then(() => palInitFinished = true)
     })
 }
 

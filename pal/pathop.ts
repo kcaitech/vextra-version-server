@@ -111,11 +111,12 @@ interface PathKitPath {
 
 
 
+const ServerPort = 10040 // 10040
 let _ck: PathKit;
 export async function init() {
     if (_ck) return;
     _ck = await PathKitInit({
-        locateFile: (file: string) => file
+        locateFile: (file: string) => `http://localhost:${ServerPort}/` + file
     })
 }
 

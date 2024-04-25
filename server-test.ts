@@ -134,9 +134,10 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
     }
 
     const repo = new Repository()
-    const document = await importDocument(storage, documentInfo.path, "", documentInfo.version_id, repo)
+    const d = await importDocument(storage, documentInfo.path, "", documentInfo.version_id, repo)
+    const document = d.document
 
-    const coopRepo = new CoopRepository(document, repo)
+    const coopRepo = new CoopRepository(d.document, repo)
     coopRepo.setNet(new CoopNet(BigInt(documentInfo.id)))
     coopRepo.setBaseVer(radixRevert.from(documentInfo.last_cmd_id))
 

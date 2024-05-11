@@ -118,21 +118,26 @@ const radixRevert = new RadixConvert(62)
 
 class CoopNet implements ICoopNet {
     private documentId: bigint
+
     constructor(documentId: bigint) {
         this.documentId = documentId
     }
+
     hasConnected(): boolean {
         return true;
     }
+
     async pullCmds(from: string, to: string): Promise<Cmd[]> {
         const startCmdId = from ? radixRevert.to(from) : 0n
         const endCmdId = to ? radixRevert.to(to) : undefined
         const cmdItemList = await findCmdItem(this.documentId, startCmdId, endCmdId)
         return parseCmdList(cmdItemList)
     }
+
     async postCmds(cmds: Cmd[]): Promise<boolean> {
         return false;
     }
+
     watchCmds(watcher: (cmds: Cmd[]) => void): void {
 
     }
@@ -215,7 +220,7 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
             .map(shape => shape.imageRef)
         )
     }
-    const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => {})
+    const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => console.log("mediasMgr.get失败", err))
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
     await Promise.race([imageAllLoadPromise, timeoutPromise])
 

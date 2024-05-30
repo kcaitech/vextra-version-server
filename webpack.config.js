@@ -26,6 +26,7 @@ module.exports = {
         alias: {
             "@": path.resolve(__dirname, ""),
         },
+        mainFields: ['main', 'module', 'browser'],
     },
     output: {
         path: path.resolve(__dirname, "dist"),

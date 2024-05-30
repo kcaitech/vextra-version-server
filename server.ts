@@ -1,4 +1,19 @@
 import {MongoClient} from "mongodb"
+import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
+import config from "./config"
+import {init as palInit} from "./pal/init"
+import {OssStorage, S3Storage, StorageOptions} from "./storage"
+import * as exit_util from "./utils/exit_util"
+import * as console_util from "./utils/console_util"
+import * as times_util from "./utils/times_util"
+import {WebSocket} from "ws"
+import Koa from "koa"
+import Router from "koa-router"
+import BodyParser from "koa-bodyparser"
+import Static from "koa-static"
+import axios from "axios"
+import FormData from "form-data"
+
 import {
     Cmd,
     CoopRepository,
@@ -14,20 +29,6 @@ import {
     Page,
     ShapeType,
 } from "@kcdesign/data"
-import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
-import config from "./config"
-import {init as palInit} from "./pal/init"
-import {OssStorage, S3Storage, StorageOptions} from "./storage"
-import * as exit_util from "./utils/exit_util"
-import * as console_util from "./utils/console_util"
-import * as times_util from "./utils/times_util"
-import {WebSocket} from "ws"
-import Koa from "koa"
-import Router from "koa-router"
-import BodyParser from "koa-bodyparser"
-import Static from "koa-static"
-import axios from "axios"
-import FormData from "form-data"
 
 console_util.objectToStr()
 

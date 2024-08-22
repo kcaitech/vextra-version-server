@@ -21,7 +21,7 @@ for /f "tokens=1,* delims==" %%a in (.env) do (
 
 docker build --target runner %BUILD_ARGS% -t doc-versioning-service:%VERSION_TAG% -f ./Dockerfile ../
 docker tag doc-versioning-service:%VERSION_TAG% registry.protodesign.cn:36000/kcserver/doc-versioning-service:%VERSION_TAG%
-docker login registry.protodesign.cn:36000 -u admin -p Kcai1212
+docker login registry.protodesign.cn:36000 -u kcserver1 -p gnRY=Sha9_J]DXS
 docker push registry.protodesign.cn:36000/kcserver/doc-versioning-service:%VERSION_TAG%
 
 endlocal

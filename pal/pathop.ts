@@ -89,6 +89,7 @@ interface PathKitPath {
     stroke(ops?: StrokeOpts): PathKitPath | null;
     setFillType(type: FillType): void;
     simplify(): PathKitPath | null;
+    dash(on: number, off: number, phase: number): PathKitPath | null;
 }
 
 //     // Stroke
@@ -208,13 +209,18 @@ export class PalPath implements IPalPath {
         return this._path.op((path)._path, _ck.PathOp.UNION);
     }
     stroke(ops?: StrokeOpts) {
-        const path = this._path.stroke(ops); // return this
-        const ret = path ? path.toSVGString() : "";
-        return ret;
+        const path = this._path.stroke(ops);
+        if (!path) return "";
+        path.setFillType(FillType.WINDING);
+        path.simplify();
+        return path.toSVGString();
     }
     addPath(path: PalPath): boolean {
         this._path.addPath(path._path);
         return true;
+    }
+    dash(on: number, off: number, phase: number) {
+        return !!this._path.dash(on, off, phase);
     }
     toSVGString(): string {
         return this._path.toSVGString();

@@ -1,0 +1,32 @@
+{
+    "mysql": {
+        "host": "",
+        "port": 0,
+        "user": "",
+        "password": "",
+        "database": ""
+    },
+    "mongodb": {
+        "url": ""
+    },
+    "storage": {
+        "type": "s3",
+        "endPoint": "",
+        "region": "",
+        "accessKeyId": "",
+        "secretAccessKey": "",
+        "bucketName": "",
+        "filesBucketName": ""
+    },
+    "uploadApi": {
+        "url": ""
+    },
+    "redis": {
+        "address": "",
+        "password": "",
+        "db": 0,
+        "sentinel": "",
+        "sentinelAddrs": [],
+        "masterName": ""
+    }
+}

@@ -1,4 +1,4 @@
-import {MongoClient} from "mongodb"
+import { MongoClient } from "mongodb"
 import {
     Cmd,
     CoopRepository,
@@ -14,20 +14,22 @@ import {
     Page,
     ShapeType,
 } from "@kcdesign/data"
-import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
+import { mysqlConn, retryMysqlConnect, waitMysqlConn } from "./mysql_db"
 import config from "./config"
-import {init as palInit} from "./pal/init"
-import {OssStorage, S3Storage, StorageOptions} from "./storage"
+import { init as palInit } from "./pal/init"
+import { OssStorage, S3Storage, StorageOptions } from "./storage"
 import * as exit_util from "./utils/exit_util"
 import * as console_util from "./utils/console_util"
 import * as times_util from "./utils/times_util"
-import {WebSocket} from "ws"
+import { WebSocket } from "ws"
 import Koa from "koa"
 import Router from "koa-router"
 import BodyParser from "koa-bodyparser"
 import Static from "koa-static"
 import axios from "axios"
 import FormData from "form-data"
+import { DocumentInfo } from "./basic"
+import { upload } from "./document_upload"
 
 console_util.objectToStr()
 
@@ -36,23 +38,18 @@ const MinCmdCount = 100
 
 const ServerPort = 10040
 
-const DOCUMENT_SERVICE_HOST = config.documentService.host
-const API_VERSION_PATH = "/api/v1"
-const DOCUMENT_UPLOAD_PATH = "/documents/document_upload"
-const DOCUMENT_UPLOAD_URL = `ws://${DOCUMENT_SERVICE_HOST}${API_VERSION_PATH}${DOCUMENT_UPLOAD_PATH}`
+// 直接上传oss
+// const DOCUMENT_SERVICE_HOST = config.documentService.host
+// const API_VERSION_PATH = "/api/v1"
+// const DOCUMENT_UPLOAD_PATH = "/documents/document_upload"
+// const DOCUMENT_UPLOAD_URL = `ws://${DOCUMENT_SERVICE_HOST}${API_VERSION_PATH}${DOCUMENT_UPLOAD_PATH}`
 
 let mongoDBClient: MongoClient
 let storage: IStorage
 
-type Document = {
-    id: string
-    path: string
-    version_id: string
-    last_cmd_id: string
-}
 
-async function getDocument(documentId: string): Promise<Document | undefined> {
-    return new Promise<Document | undefined>((resolve, reject) => {
+async function getDocument(documentId: string): Promise<DocumentInfo | undefined> {
+    return new Promise<DocumentInfo | undefined>((resolve, reject) => {
         mysqlConn.query(`select d.id, d.path, d.version_id, dv.last_cmd_id
 from document d
 inner join document_version dv on dv.document_id=d.id and dv.version_id=d.version_id and dv.deleted_at is null
@@ -60,7 +57,7 @@ where d.id=${documentId} and d.deleted_at is null
 limit 1`,
             (err, rows) => {
                 if (err) reject(err);
-                const _rows = rows as Document[]
+                const _rows = rows as DocumentInfo[]
                 resolve(_rows.length > 0 ? _rows[0] : undefined)
             },
         )
@@ -100,7 +97,7 @@ async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: b
     if (startCmdId !== undefined) findQuery._id["$gte"] = startCmdId;
     if (endCmdId !== undefined) findQuery._id["$lte"] = endCmdId;
     if (startCmdId === undefined && endCmdId === undefined) delete findQuery._id;
-    const findCursor = documentCollection.find(findQuery, {sort: {_id: 1}})
+    const findCursor = documentCollection.find(findQuery, { sort: { _id: 1 } })
     return await findCursor.toArray() as any as CmdItem[]
 }
 
@@ -168,7 +165,7 @@ async function svgToPng(svgContent: string): Promise<Buffer> {
     return response.data
 }
 
-async function generateNewVersion(documentInfo: Document): Promise<boolean> {
+async function generateNewVersion(documentInfo: DocumentInfo): Promise<boolean> {
     const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
@@ -217,7 +214,7 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
             .map(shape => shape.imageRef)
         )
     }
-    const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => {})
+    const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => { })
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
     await Promise.race([imageAllLoadPromise, timeoutPromise])
 
@@ -235,12 +232,7 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
 
     try {
         const documentData = await exportExForm(document)
-        const ws = new WebSocket(DOCUMENT_UPLOAD_URL)
-        await new Promise<void>((resolve, reject) => {
-            ws.onopen = _ => resolve()
-            ws.onerror = err => reject(err)
-        })
-        ws.binaryType = "arraybuffer"
+
         const lastCmdId = cmdItemList[cmdItemList.length - 1]._id.toString(10)
         let mediasSize = 0
         for (let i = 0, len = documentData.media_names.length; i < len; i++) {
@@ -248,45 +240,9 @@ async function generateNewVersion(documentInfo: Document): Promise<boolean> {
             if (buffer !== undefined) mediasSize += buffer.buff.byteLength;
         }
         const documentText = await document.getText()
-        ws.send(JSON.stringify({
-            document_id: documentInfo.id,
-            last_cmd_id: lastCmdId,
-        }))
-        ws.send(JSON.stringify({
-            ...documentData,
-            medias_size: mediasSize,
-            document_text: documentText,
-            page_image_base64_list: pageImageBase64List,
-        }))
-        const versionId = await new Promise<string>((resolve, reject) => {
-            let isClosed = false
-            ws.onmessage = ((event) => {
-                if (isClosed) return;
-                try {
-                    const data = JSON.parse(event.data as string)
-                    const status = data.status
-                    const versionId = data.data?.version_id
-                    if (status !== "success" || !versionId) {
-                        console.log(`[${documentInfo.id}]generateNewVersion错误：document upload fail`, data)
-                        reject()
-                        return
-                    }
-                    resolve(versionId)
-                } catch (e) {
-                    console.log(`[${documentInfo.id}]generateNewVersion错误：document upload fail`, e)
-                    reject()
-                }
-                isClosed = true
-                ws.close()
-            })
-            setTimeout(() => {
-                if (isClosed) return;
-                console.log(`[${documentInfo.id}]generateNewVersion错误：document upload timeout`)
-                reject()
-                isClosed = true
-                ws.close()
-            }, 1000 * 10)
-        })
+
+        upload(documentInfo, lastCmdId, documentData, documentText, mediasSize, pageImageBase64List)
+
     } catch (err) {
         console.log(`[${documentInfo.id}]generateNewVersion错误：上传错误`, err)
         return false
@@ -360,7 +316,7 @@ async function run() {
         throw err
     }
 
-    const storageConfig: typeof config.s3 | typeof config.oss = config.storageType === "oss" ? config.oss : config.s3
+    const storageConfig = config.storage
     const storageOptions: StorageOptions = {
         endPoint: storageConfig.endPoint,
         region: storageConfig.region,
@@ -368,7 +324,7 @@ async function run() {
         secretKey: storageConfig.secretAccessKey,
         bucketName: storageConfig.bucketName,
     }
-    storage = config.storageType === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
+    storage = config.storage.type === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
 
     app.listen(ServerPort, () => {
         console.log(`manager服务已启动 ${ServerPort}`)

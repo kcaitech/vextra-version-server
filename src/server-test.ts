@@ -1,4 +1,4 @@
-import {MongoClient} from "mongodb"
+import { MongoClient } from "mongodb"
 import {
     Cmd,
     CoopRepository,
@@ -10,10 +10,10 @@ import {
     RadixConvert,
     Repository,
 } from "@kcdesign/data"
-import {mysqlConn, retryMysqlConnect, waitMysqlConn} from "./mysql_db"
+import { mysqlConn, retryMysqlConnect, waitMysqlConn } from "./mysql_db"
 import config from "./config"
-import {init as palInit} from "./pal/init"
-import {OssStorage, S3Storage, StorageOptions} from "./storage"
+import { init as palInit } from "./pal/init"
+import { OssStorage, S3Storage, StorageOptions } from "./storage"
 import * as exit_util from "./utils/exit_util"
 import * as console_util from "./utils/console_util"
 import * as times_util from "./utils/times_util"
@@ -81,7 +81,7 @@ async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: b
     if (startCmdId !== undefined) findQuery._id["$gte"] = startCmdId;
     if (endCmdId !== undefined) findQuery._id["$lte"] = endCmdId;
     if (startCmdId === undefined && endCmdId === undefined) delete findQuery._id;
-    const findCursor = documentCollection.find(findQuery, {sort: {_id: 1}})
+    const findCursor = documentCollection.find(findQuery, { sort: { _id: 1 } })
     return await findCursor.toArray() as any as CmdItem[]
 }
 
@@ -199,7 +199,7 @@ async function run() {
         throw err
     }
 
-    const storageConfig: typeof config.s3 | typeof config.oss = config.storageType === "oss" ? config.oss : config.s3
+    const storageConfig = config.storage
     const storageOptions: StorageOptions = {
         endPoint: storageConfig.endPoint,
         region: storageConfig.region,
@@ -207,7 +207,7 @@ async function run() {
         secretKey: storageConfig.secretAccessKey,
         bucketName: storageConfig.bucketName,
     }
-    storage = config.storageType === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
+    storage = config.storage.type === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
 
     await palInit()
 

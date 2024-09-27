@@ -20,9 +20,12 @@ RUN echo "always-auth=true" >> ~/.npmrc
 RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-registry/" >> ~/.npmrc
 
 RUN npm i
-# RUN rm -f ~/.npmrc
 RUN npm run build
-# RUN rm -rf ./node_modules/skia-canvas
 
+FROM node:20-alpine AS runner
+USER root
+WORKDIR /app
+COPY --from=builder /app/node_modules ./
+COPY --from=builder /app/dist ./
 RUN mkdir -p /app/log && touch /app/log/all.log
 CMD node /app/dist/server.js | tee /app/log/all.log 2>&1

@@ -42,15 +42,20 @@ type Config = {
     redis: Redis
 }
 
-import fs from "fs"
+// sae的变量由env传递
+// k8s可由configmap或者secret进行文件挂载
 
+import fs from "fs"
 import example from "../config/config.json"
 function compile_check(_: Config) { }
 compile_check(example)
 
 let config: Config = example;
 const configfile = 'config/config.json'
-if (fs.existsSync(configfile)) {
+if (process.env.kcconfig) {
+    config = JSON.parse(process.env.kcconfig) as Config;
+}
+else if (fs.existsSync(configfile)) {
     const cf = fs.readFileSync('config/config.json');
     config = JSON.parse(cf.toString()) as Config;
 }

@@ -27,5 +27,6 @@ USER root
 WORKDIR /app
 COPY --from=builder /app/node_modules ./
 COPY --from=builder /app/dist ./
+COPY ./static ./static
 RUN mkdir -p /app/log && touch /app/log/all.log
 CMD node /app/dist/server.js | tee /app/log/all.log 2>&1

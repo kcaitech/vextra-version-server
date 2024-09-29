@@ -44,9 +44,15 @@
         "mongodb": "^6.3.0",
         "mysql": "^2.18.1",
         "pathkit-wasm": "^1.0.0",
-        "skia-canvas": "^1.0.1",
+        "skia-canvas": "1.0.2",
         "tslib": "^2.6.0",
         "uuid": "^9.0.1",
-        "ws": "^8.13.0"
+        "ws": "^8.13.0",
+        "@mapbox/node-pre-gyp": "^1.0.9",
+        "cargo-cp-artifact": "^0.1",
+        "glob": "^8.0.3",
+        "path-browserify": "^1.0.1",
+        "simple-get": "^4.0.1",
+        "string-split-by": "^1.0.0"
     }
 }

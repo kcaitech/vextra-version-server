@@ -89,6 +89,7 @@ interface PathKitPath {
     stroke(ops?: StrokeOpts): PathKitPath | null;
     setFillType(type: FillType): void;
     simplify(): PathKitPath | null;
+    dash(on: number, off: number, phase: number): PathKitPath | null;
 }
 
 //     // Stroke
@@ -215,6 +216,9 @@ export class PalPath implements IPalPath {
     addPath(path: PalPath): boolean {
         this._path.addPath(path._path);
         return true;
+    }
+    dash(on: number, off: number, phase: number) {
+        return !!this._path.dash(on, off, phase);
     }
     toSVGString(): string {
         return this._path.toSVGString();

@@ -1,1 +1,13 @@
-FROM node:22-alpine
+# alpine
+FROM node:20-alpine AS builder
+
+USER root
+
+WORKDIR /app
+
+COPY package.json .
+RUN cat package.json | sed '/skia-canvas/d' | sed '/@kcdesign/d' > package.json
+
+RUN echo "registry=https://registry.npmmirror.com" > .npmrc
+
+RUN npm i

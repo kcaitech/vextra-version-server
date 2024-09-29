@@ -1,5 +1,5 @@
 # alpine
-FROM kcnode:1.0.0 AS builder
+FROM node:20-alpine AS builder
 #FROM doc-versioning-service-node20-slim-builder:latest as runner
 
 USER root
@@ -10,23 +10,29 @@ COPY . .
 ARG NPM_USERNAME
 ARG NPM_PASSWORD
 
-RUN rm -f ~/.npmrc
+RUN rm -f .npmrc
 # node16-
 #RUN echo "_auth=$(echo -n "$NPM_USERNAME:$NPM_PASSWORD" | base64)" >> ~/.npmrc
-
+    
 # node18+
-RUN echo "//packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-registry/:_auth=$(echo -n "$NPM_USERNAME:$NPM_PASSWORD" | base64)" >> ~/.npmrc
-RUN echo "always-auth=true" >> ~/.npmrc
-RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-registry/" >> ~/.npmrc
+RUN echo "//packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-registry/:_auth=$(echo -n "$NPM_USERNAME:$NPM_PASSWORD" | base64)" >> .npmrc
+RUN echo "always-auth=true" >> .npmrc
+RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-registry/" >> .npmrc
+# RUN cat .npmrc
 
+RUN  cat package.json | sed '/skia-canvas/d' > package.json
 RUN npm i
+RUN mv skia-canvas/lib-linux-x64-musl/v6 skia-canvas/lib
+RUN mv skia-canvas node_modules
+
 RUN npm run build
 
+RUN mv node_modules/skia-canvas .
 RUN rm -rf node_modules
 RUN npm i --omit=dev
+RUN mv skia-canvas node_modules
 
-
-FROM kcnode:1.0.0
+FROM node:20-alpine
 USER root
 WORKDIR /app
 COPY --from=builder /app/node_modules ./

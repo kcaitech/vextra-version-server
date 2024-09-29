@@ -13,9 +13,6 @@ module.exports = {
                 test: /\.tsx?$/,
                 use: {
                     loader: "ts-loader",
-                    options: {
-                        configFile: "./tsconfig.json",
-                    },
                 },
                 exclude: /node_modules/,
             },
@@ -23,9 +20,6 @@ module.exports = {
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
-        alias: {
-            "@": path.resolve(__dirname, ""),
-        },
     },
     output: {
         path: path.resolve(__dirname, "dist"),

@@ -2,4 +2,4 @@
 
 ./build.sh 6393d66c28b61c88e7f83906 z2tzwCltb1gk
 
-提供文档生成ws服务
+提供文档生成get服务

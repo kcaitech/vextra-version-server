@@ -1,5 +1,5 @@
 # alpine
-FROM node:20-alpine AS builder
+FROM kcnode:1.0.0 AS builder
 #FROM doc-versioning-service-node20-slim-builder:latest as runner
 
 USER root
@@ -22,7 +22,11 @@ RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-
 RUN npm i
 RUN npm run build
 
-FROM node:20-alpine AS runner
+RUN rm -rf node_modules
+RUN npm i --omit=dev
+
+
+FROM kcnode:1.0.0
 USER root
 WORKDIR /app
 COPY --from=builder /app/node_modules ./

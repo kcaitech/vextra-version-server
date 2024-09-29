@@ -18,15 +18,6 @@
         "bucketName": "",
         "filesBucketName": ""
     },
-    "uploadApi": {
-        "url": ""
-    },
-    "redis": {
-        "address": "",
-        "password": "",
-        "db": 0,
-        "sentinel": "",
-        "sentinelAddrs": [],
-        "masterName": ""
-    }
+    "min_cmd_count": 100,
+    "port": 10040
 }

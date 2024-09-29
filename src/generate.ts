@@ -1,8 +1,13 @@
-import { Cmd, ICoopNet, parseCmds, RadixConvert } from "@kcdesign/data";
+import { Cmd, CoopRepository, ExFromJson, exportExForm, exportSvg, ICoopNet, ImageShape, importDocument, Page, parseCmds, RadixConvert, Repository, ShapeType } from "@kcdesign/data";
 import axios from "axios";
 import { DocumentInfo } from "./basic";
 import { mongodb } from "./mongo";
 import { db } from "./mysql_db";
+import FormData from "form-data"
+import { storage } from "./storage";
+import * as times_util from "./utils/times_util"
+import config from "./config";
+import * as console_util from "./utils/console_util"
 
 async function getDocument(documentId: string): Promise<DocumentInfo | undefined> {
     const mysqlConn = await db();
@@ -122,20 +127,20 @@ async function svgToPng(svgContent: string): Promise<Buffer> {
     return response.data
 }
 
-async function generateNewVersion(documentInfo: DocumentInfo): Promise<boolean> {
+async function generateNewVersion(documentInfo: DocumentInfo): Promise<{documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageImageBase64List: string[]} | undefined> {
     const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
         console.log(`[${documentInfo.id}]无新cmd，不需要生成新版本`)
-        return true
+        return
     }
-    if (cmdList.length < MinCmdCount) {
-        console.log(`[${documentInfo.id}]cmd数量小于${MinCmdCount}，不需要生成新版本`)
-        return true
+    if (cmdList.length < config.min_cmd_count) {
+        console.log(`[${documentInfo.id}]cmd数量小于${config.min_cmd_count}，不需要生成新版本`)
+        return
     }
-
+    const _storage = await storage();
     const repo = new Repository()
-    const d = await importDocument(storage, documentInfo.path, "", documentInfo.version_id, repo)
+    const d = await importDocument(_storage, documentInfo.path, "", documentInfo.version_id, repo)
     const document = d.document
 
     const coopRepo = new CoopRepository(document, repo)
@@ -155,7 +160,7 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<boolean> 
     } catch (err) {
         console_util.enableConsole(console_util.ConsoleType.log)
         console.log(`[${documentInfo.id}]generateNewVersion错误：coopRepo.receive错误`, err)
-        return false
+        return
     }
     console_util.enableConsole(console_util.ConsoleType.log)
 
@@ -198,13 +203,26 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<boolean> 
         }
         const documentText = await document.getText()
 
-        upload(documentInfo, lastCmdId, documentData, documentText, mediasSize, pageImageBase64List)
+        return {documentInfo, lastCmdId, documentData, documentText, mediasSize, pageImageBase64List}
 
     } catch (err) {
         console.log(`[${documentInfo.id}]generateNewVersion错误：上传错误`, err)
-        return false
+        return
     }
 
-    console.log(`[${documentInfo.id}]生成新版本成功`)
-    return true
+}
+
+
+export async function generate(documentId: string) {
+
+    documentId = documentId + ""
+    console.log("generate", documentId)
+
+    const documentInfo = await getDocument(documentId)
+    if (!documentInfo) {
+        return
+    }
+
+    const result = await generateNewVersion(documentInfo)
+    return result;
 }

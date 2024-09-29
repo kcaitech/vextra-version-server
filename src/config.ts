@@ -21,25 +21,26 @@ type Storage = {
     filesBucketName: string
 }
 
-type UploadApi = {
-    url: string
-}
+// type UploadApi = {
+//     url: string
+// }
 
-type Redis = {
-    address: string,
-    password: string,
-    db: number,
-    sentinel: string,
-    sentinelAddrs: string[],
-    masterName: string
-}
+// type Redis = {
+//     address: string,
+//     password: string,
+//     db: number,
+//     sentinel: string,
+//     sentinelAddrs: string[],
+//     masterName: string
+// }
 
 type Config = {
     mysql: Mysql,
     mongodb: Mongodb,
     storage: Storage
-    uploadApi: UploadApi,
-    redis: Redis
+    // redis: Redis
+    min_cmd_count: number
+    port: number
 }
 
 // sae的变量由env传递
@@ -53,12 +54,11 @@ compile_check(example)
 let config: Config = example;
 const configfile = 'config/config.json'
 if (process.env.kcconfig) {
-    config = JSON.parse(process.env.kcconfig) as Config;
+    config = Object.assign(config, JSON.parse(process.env.kcconfig));
 }
 else if (fs.existsSync(configfile)) {
     const cf = fs.readFileSync('config/config.json');
-    config = JSON.parse(cf.toString()) as Config;
+    config = Object.assign(config, JSON.parse(cf.toString()));
 }
-
 
 export default config;

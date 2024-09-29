@@ -127,7 +127,7 @@ async function svgToPng(svgContent: string): Promise<Buffer> {
     return response.data
 }
 
-async function generateNewVersion(documentInfo: DocumentInfo): Promise<{documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageImageBase64List: string[]} | undefined> {
+async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageImageBase64List: string[] } | undefined> {
     const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
@@ -180,17 +180,19 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{document
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
     await Promise.race([imageAllLoadPromise, timeoutPromise])
 
-    const pageImageBase64List: string[] = []
-    for (const page of pageList) {
+    const pagePngBuffers = await Promise.all(pageList.map(page => {
         try {
             const pageSvg = exportSvg(page)
-            if (!pageSvg) continue;
-            const pagePngBuffer = await svgToPng(pageSvg)
-            pageImageBase64List.push(pagePngBuffer.toString("base64"))
+            if (!pageSvg) return;
+            return svgToPng(pageSvg)
         } catch (err) {
             console.log("导出page图片失败", err)
         }
-    }
+    }))
+    const pageImageBase64List = pagePngBuffers.map(pagePngBuffer => {
+        if (!pagePngBuffer) return ''
+        return pagePngBuffer.toString("base64")
+    })
 
     try {
         const documentData = await exportExForm(document)
@@ -203,7 +205,7 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{document
         }
         const documentText = await document.getText()
 
-        return {documentInfo, lastCmdId, documentData, documentText, mediasSize, pageImageBase64List}
+        return { documentInfo, lastCmdId, documentData, documentText, mediasSize, pageImageBase64List }
 
     } catch (err) {
         console.log(`[${documentInfo.id}]generateNewVersion错误：上传错误`, err)

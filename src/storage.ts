@@ -71,6 +71,7 @@ export class S3Storage implements IStorage {
 }
 
 import OSS from "ali-oss"
+import config from "./config"
 
 export class OssStorage implements IStorage {
     private client: OSS
@@ -119,4 +120,21 @@ export class OssStorage implements IStorage {
     public async put(uri: string, data: Uint8Array, contentType: string = "application/json"): Promise<void> {
         await this.client.put(uri, Buffer.from(data), { headers: { "Content-Type": contentType } })
     }
+}
+
+
+let _storage: IStorage
+export async function storage() {
+    if (!_storage) {
+        const storageConfig = config.storage
+        const storageOptions: StorageOptions = {
+            endPoint: storageConfig.endPoint,
+            region: storageConfig.region,
+            accessKey: storageConfig.accessKeyId,
+            secretKey: storageConfig.secretAccessKey,
+            bucketName: storageConfig.bucketName,
+        }
+        _storage = config.storage.type === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
+    }
+    return _storage;
 }

@@ -15,7 +15,7 @@ function mysqlCreateConnection() {
     })
 }
 
-export let mysqlConn = mysqlCreateConnection()
+const mysqlConn = mysqlCreateConnection()
 let mysqlConnPromise: Promise<void> | undefined
 export async function waitMysqlConn() {
     if (mysqlConnPromise == undefined) return;
@@ -23,7 +23,7 @@ export async function waitMysqlConn() {
 }
 
 async function mysqlConnect() {
-    mysqlConn = mysqlCreateConnection()
+    // mysqlConn = mysqlCreateConnection()
     return new Promise<void>((resolve, reject) => {
         mysqlConn.connect((err) => {
             if (err) {
@@ -48,7 +48,7 @@ async function mysqlConnect() {
 }
 
 // retryCount=0表示不重试，retryCount=-1表示无限重试
-export async function retryMysqlConnect(retryCount: number, retryInterval: number = 1000) {
+async function retryMysqlConnect(retryCount: number, retryInterval: number = 1000) {
     if (retryInterval < 1000) retryInterval = 1000;
     let count = 0
     while (true) {
@@ -65,4 +65,20 @@ export async function retryMysqlConnect(retryCount: number, retryInterval: numbe
             count++
         }
     }
+}
+
+let connected = false;
+
+export async function db() {
+    if (!connected) {
+        try {
+            await retryMysqlConnect(3)
+        } catch (err) {
+            console.log("mysql连接失败", err)
+            throw err;
+        }
+        connected = true;
+    }
+    await waitMysqlConn();
+    return mysqlConn
 }

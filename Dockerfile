@@ -20,7 +20,7 @@ RUN echo "always-auth=true" >> .npmrc
 RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-registry/" >> .npmrc
 # RUN cat .npmrc
 
-RUN  cat package.json | sed '/skia-canvas/d' > package.json
+RUN cat package.json | sed '/skia-canvas/d' > package.json
 RUN npm i
 RUN mv skia-canvas/lib-linux-x64-musl/v6 skia-canvas/lib
 RUN mv skia-canvas node_modules

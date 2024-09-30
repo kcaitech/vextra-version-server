@@ -6,6 +6,8 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
+docker pull node:20-alpine
+
 container_name='kcversion'
 
 # 使用 docker images | grep 检查镜像是否存在

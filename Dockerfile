@@ -20,7 +20,9 @@ RUN echo "always-auth=true" >> .npmrc
 RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-registry/" >> .npmrc
 # RUN cat .npmrc
 
-RUN cat package.json | sed '/skia-canvas/d' > package.json
+RUN cat package.json | sed '/skia-canvas/d' > package1.json
+RUN rm -f package.json
+RUN mv package1.json package.json
 RUN npm i
 RUN mv skia-canvas/lib-linux-x64-musl/v6 skia-canvas/lib
 RUN mv skia-canvas node_modules
@@ -32,11 +34,12 @@ RUN rm -rf node_modules
 RUN npm i --omit=dev
 RUN mv skia-canvas node_modules
 
-FROM node:20-alpine
+FROM kcversion-pre:1.0.0
 USER root
 WORKDIR /app
-COPY --from=builder /app/node_modules ./
-COPY --from=builder /app/dist ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
 COPY ./static ./static
 RUN mkdir -p /app/log && touch /app/log/all.log
 CMD node /app/dist/server.js | tee /app/log/all.log 2>&1
+# CMD sleep 330000

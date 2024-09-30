@@ -9,9 +9,9 @@ fi
 container_name='kcversion'
 
 # 使用 docker images | grep 检查镜像是否存在
-# if [ "$(docker images | grep ${container_name}-pre | awk '{print $2}' | sed 's/[^0-9.]*//g')" != "1.0.0" ]; then
-#     docker build -t ${container_name}-pre:1.0.0 -f Dockerfile-pre .
-# fi
+if [ "$(docker images | grep ${container_name}-pre | awk '{print $2}' | sed 's/[^0-9.]*//g')" != "1.0.0" ]; then
+    docker build -t ${container_name}-pre:1.0.0 -f Dockerfile-pre . || exit $?
+fi
 
 # 读取 package.json 中的版本号
 version=$(cat package.json | grep '"version"' | sed 's/[^0-9.]*//g')

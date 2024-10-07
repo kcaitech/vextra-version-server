@@ -180,6 +180,7 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
     await Promise.race([imageAllLoadPromise, timeoutPromise])
 
+    // todo 导出svg就行
     const pagePngBuffers = await Promise.all(pageList.map(page => {
         try {
             const pageSvg = exportSvg(page)

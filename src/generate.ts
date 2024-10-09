@@ -103,31 +103,31 @@ class CoopNet implements ICoopNet {
     }
 }
 
-async function svgToPng(svgContent: string): Promise<Buffer> {
-    const svgBuffer = Buffer.from(svgContent, "utf-8")
+// async function svgToPng(svgContent: string): Promise<Buffer> {
+//     const svgBuffer = Buffer.from(svgContent, "utf-8")
 
-    const form = new FormData()
-    form.append("svg", svgBuffer, {
-        filename: "image.svg",
-        contentType: "image/svg+xml",
-    })
+//     const form = new FormData()
+//     form.append("svg", svgBuffer, {
+//         filename: "image.svg",
+//         contentType: "image/svg+xml",
+//     })
 
-    const response = await axios.post<Buffer>("http://svg-to-png.kc.svc.cluster.local:10050/svg_to_png", form, {
-        headers: {
-            ...form.getHeaders()
-        },
-        responseType: "arraybuffer",
-        timeout: 1000 * 10,
-    })
-    if (response.status !== 200) {
-        console.log("svgToPng错误", response.status, response.data)
-        throw new Error("svgToPng错误")
-    }
+//     const response = await axios.post<Buffer>("http://svg-to-png.kc.svc.cluster.local:10050/svg_to_png", form, {
+//         headers: {
+//             ...form.getHeaders()
+//         },
+//         responseType: "arraybuffer",
+//         timeout: 1000 * 10,
+//     })
+//     if (response.status !== 200) {
+//         console.log("svgToPng错误", response.status, response.data)
+//         throw new Error("svgToPng错误")
+//     }
 
-    return response.data
-}
+//     return response.data
+// }
 
-async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageImageBase64List: string[] } | undefined> {
+async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageSvgs: string[] } | undefined> {
     const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
@@ -181,19 +181,20 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
     await Promise.race([imageAllLoadPromise, timeoutPromise])
 
     // todo 导出svg就行
-    const pagePngBuffers = await Promise.all(pageList.map(page => {
-        try {
-            const pageSvg = exportSvg(page)
-            if (!pageSvg) return;
-            return svgToPng(pageSvg)
-        } catch (err) {
-            console.log("导出page图片失败", err)
-        }
-    }))
-    const pageImageBase64List = pagePngBuffers.map(pagePngBuffer => {
-        if (!pagePngBuffer) return ''
-        return pagePngBuffer.toString("base64")
-    })
+    // const pagePngBuffers = await Promise.all(pageList.map(page => {
+    //     try {
+    //         const pageSvg = exportSvg(page)
+    //         if (!pageSvg) return;
+    //         return svgToPng(pageSvg)
+    //     } catch (err) {
+    //         console.log("导出page图片失败", err)
+    //     }
+    // }))
+    // const pageImageBase64List = pagePngBuffers.map(pagePngBuffer => {
+    //     if (!pagePngBuffer) return ''
+    //     return pagePngBuffer.toString("base64")
+    // })
+    const pageSvgs = pageList.map(page => exportSvg(page))
 
     try {
         const documentData = await exportExForm(document)
@@ -206,7 +207,7 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
         }
         const documentText = await document.getText()
 
-        return { documentInfo, lastCmdId, documentData, documentText, mediasSize, pageImageBase64List }
+        return { documentInfo, lastCmdId, documentData, documentText, mediasSize, pageSvgs }
 
     } catch (err) {
         console.log(`[${documentInfo.id}]generateNewVersion错误：上传错误`, err)

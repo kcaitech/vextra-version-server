@@ -4,7 +4,7 @@ import config from "./config"
 let mongoDBClient: MongoClient
 async function connect() {
     try {
-        mongoDBClient = await MongoClient.connect(config.mongodb.url, {
+        mongoDBClient = await MongoClient.connect(config.mongo.uri, {
             useBigInt64: true,
         })
     } catch (err) {
@@ -18,7 +18,7 @@ let _documentCollection: Collection<Document>
 export async function mongodb() {
     if (!_documentCollection) {
         await connect();
-        const mongoDB = mongoDBClient.db("kcserver")
+        const mongoDB = mongoDBClient.db(config.mongo.db)
         _documentCollection = mongoDB.collection("document1")
     }
     return _documentCollection;

@@ -8,7 +8,8 @@ type Mysql = {
 }
 
 type Mongodb = {
-    url: string
+    uri: string,
+    db: string
 }
 
 type Storage = {
@@ -36,7 +37,7 @@ type Storage = {
 
 type Config = {
     mysql: Mysql,
-    mongodb: Mongodb,
+    mongo: Mongodb,
     storage: Storage
     // redis: Redis
     min_cmd_count: number

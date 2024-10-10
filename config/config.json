@@ -6,8 +6,9 @@
         "password": "",
         "database": ""
     },
-    "mongodb": {
-        "url": ""
+    "mongo": {
+        "uri": "mongodb://root:jKKsinkjilKKLSW@mongo:27017",
+        "db": "kcserver"
     },
     "storage": {
         "type": "s3",

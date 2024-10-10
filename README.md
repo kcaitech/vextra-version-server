@@ -2,7 +2,7 @@
 提供文档生成get服务
 
 ## docker镜像
-./build-docker.sh 6393d66c28b61c88e7f83906 z2tzwCltb1gk
+./build-docker.sh
 
 ## 配置
 ### sae

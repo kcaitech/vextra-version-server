@@ -1,10 +1,15 @@
 #!/bin/bash
 
 # 检查是否提供了足够的参数
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <NPM_USERNAME> <NPM_PASSWORD>"
-    exit 1
-fi
+# if [ "$#" -ne 2 ]; then
+#     echo "Usage: $0 <NPM_USERNAME> <NPM_PASSWORD>"
+#     exit 1
+# fi
+# NPM_USERNAME=$1
+# NPM_PASSWORD=$2
+
+NPM_USERNAME=6393d66c28b61c88e7f83906
+NPM_PASSWORD=z2tzwCltb1gk
 
 docker pull node:20-alpine
 
@@ -26,6 +31,6 @@ echo '---'
 docker build \
     -t ${container_name}:$version \
     -f Dockerfile \
-    --build-arg NPM_USERNAME=$1 \
-    --build-arg NPM_PASSWORD=$2 \
+    --build-arg NPM_USERNAME=$NPM_USERNAME \
+    --build-arg NPM_PASSWORD=$NPM_PASSWORD \
     . # 注意这里的最后的 "."

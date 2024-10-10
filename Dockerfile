@@ -41,5 +41,5 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY ./static ./static
 RUN mkdir -p /app/log && touch /app/log/all.log
-CMD node /app/dist/server.js | tee /app/log/all.log 2>&1
+CMD node /app/dist/server.js 2>&1 | tee /app/log/all.log
 # CMD sleep 330000

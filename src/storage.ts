@@ -43,6 +43,7 @@ export class S3Storage implements IStorage {
             }, (err, data) => {
                 if (err) {
                     // reject(err)
+                    console.log(err)
                     resolve(new Uint8Array())
                     return
                 }
@@ -75,7 +76,7 @@ import config from "./config"
 
 export class OssStorage implements IStorage {
     private client: OSS
-    private options: StorageOptions
+    // private options: StorageOptions
 
     constructor(options: StorageOptions) {
         this.client = new OSS({
@@ -88,7 +89,7 @@ export class OssStorage implements IStorage {
             internal: true,
             cname: true,
         })
-        this.options = options
+        // this.options = options
     }
 
     private async _get(uri: string, versionId?: string): Promise<Uint8Array> {
@@ -108,6 +109,7 @@ export class OssStorage implements IStorage {
         try {
             result = await this._get(uri, versionId)
         } catch (err) {
+            console.log(err)
             result = await this._get(uri).catch(() => {
                 // console.log("storage.get错误", uri, err)
                 return new Uint8Array()
@@ -130,10 +132,11 @@ export async function storage() {
         const storageOptions: StorageOptions = {
             endPoint: storageConfig.endPoint,
             region: storageConfig.region,
-            accessKey: storageConfig.accessKeyId,
+            accessKey: storageConfig.accessKeyID,
             secretKey: storageConfig.secretAccessKey,
             bucketName: storageConfig.bucketName,
         }
+        console.log("storage info:", storageOptions)
         _storage = config.storage.type === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
     }
     return _storage;

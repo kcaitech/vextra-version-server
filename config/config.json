@@ -14,7 +14,7 @@
         "type": "s3",
         "endPoint": "",
         "region": "",
-        "accessKeyId": "",
+        "accessKeyID": "",
         "secretAccessKey": "",
         "bucketName": "",
         "filesBucketName": ""

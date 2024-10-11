@@ -146,8 +146,6 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
     const coopRepo = new CoopRepository(document, repo)
     coopRepo.setNet(new CoopNet(BigInt(documentInfo.id)))
     coopRepo.setBaseVer(radixRevert.from(documentInfo.last_cmd_id))
-
-    // console_util.disableConsole(console_util.ConsoleType.log)
     try {
         const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {
@@ -180,22 +178,7 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
     await Promise.race([imageAllLoadPromise, timeoutPromise])
 
-    // todo 导出svg就行
-    // const pagePngBuffers = await Promise.all(pageList.map(page => {
-    //     try {
-    //         const pageSvg = exportSvg(page)
-    //         if (!pageSvg) return;
-    //         return svgToPng(pageSvg)
-    //     } catch (err) {
-    //         console.log("导出page图片失败", err)
-    //     }
-    // }))
-    // const pageImageBase64List = pagePngBuffers.map(pagePngBuffer => {
-    //     if (!pagePngBuffer) return ''
-    //     return pagePngBuffer.toString("base64")
-    // })
     const pageSvgs = pageList.map(page => exportSvg(page))
-
     try {
         const documentData = await exportExForm(document)
 
@@ -206,7 +189,6 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
             if (buffer !== undefined) mediasSize += buffer.buff.byteLength;
         }
         const documentText = await document.getText()
-
         return { documentInfo, lastCmdId, documentData, documentText, mediasSize, pageSvgs }
 
     } catch (err) {

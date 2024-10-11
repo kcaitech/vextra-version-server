@@ -16,7 +16,7 @@ type Storage = {
     type: string // 's3' | 'oss'
     endPoint: string,
     region: string,
-    accessKeyId: string,
+    accessKeyID: string,
     secretAccessKey: string,
     bucketName: string,
     filesBucketName: string
@@ -58,7 +58,7 @@ if (process.env.kcconfig) {
     config = Object.assign(config, JSON.parse(process.env.kcconfig));
 }
 else if (fs.existsSync(configfile)) {
-    const cf = fs.readFileSync('config/config.json');
+    const cf = fs.readFileSync(configfile);
     config = Object.assign(config, JSON.parse(cf.toString()));
 }
 

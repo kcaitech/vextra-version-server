@@ -62,7 +62,7 @@ async function run() {
     await storage();
 
     app.listen(config.port, () => {
-        console.log(`manager服务已启动 ${config.port}`)
+        console.log(`kcversion服务已启动 ${config.port}`)
         palInit().then(() => palInitFinished = true).catch(err => console.log("palInit错误", err))
     })
 }

@@ -136,7 +136,7 @@ export async function storage() {
             secretKey: storageConfig.secretAccessKey,
             bucketName: storageConfig.bucketName,
         }
-        console.log("storage info:", storageOptions)
+        // console.log("storage info:", storageOptions)
         _storage = config.storage.type === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
     }
     return _storage;

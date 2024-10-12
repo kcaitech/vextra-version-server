@@ -4,17 +4,20 @@ import config from "./config"
 import { init as palInit } from "./pal/init"
 import { storage } from "./storage"
 import * as exit_util from "./utils/exit_util"
-import * as console_util from "./utils/console_util"
 import Koa from "koa"
 import Router from "koa-router"
 import Static from "koa-static"
 import { generate } from "./generate"
 import { mongodb } from "./mongo"
+import logger from "koa-logger"
 
-console_util.objectToStr()
+// import * as console_util from "./utils/console_util"
+// console_util.objectToStr()
 
 const app = new Koa()
 const router = new Router()
+
+app.use(logger())
 
 router.get("/health_check", async (ctx, next) => {
     if (!palInitFinished) {
@@ -38,13 +41,13 @@ router.get("/generate", async (ctx, next) => {
         ctx.body = "参数错误"
         return
     }
-    const result = await generate(documentId as string);
+    const { result, err } = await generate(documentId as string);
 
     if (result) {
         ctx.body = result
     } else {
-        ctx.status = 500
-        ctx.body = "error"
+        ctx.status = 202
+        ctx.body = err
     }
 })
 

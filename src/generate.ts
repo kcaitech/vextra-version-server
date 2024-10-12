@@ -127,16 +127,20 @@ class CoopNet implements ICoopNet {
 //     return response.data
 // }
 
-async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageSvgs: string[] } | undefined> {
+type GenResult = { documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageSvgs: string[] }
+
+async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ result?: GenResult, err?: string }> {
     const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
-        console.log(`[${documentInfo.id}]无新cmd，不需要生成新版本`)
-        return
+        const msg = `[${documentInfo.id}]无新cmd，不需要生成新版本`
+        console.log(msg)
+        return { err: msg }
     }
     if (cmdList.length < config.min_cmd_count) {
-        console.log(`[${documentInfo.id}]cmd数量小于${config.min_cmd_count}，不需要生成新版本`)
-        return
+        const msg = `[${documentInfo.id}]cmd数量小于${config.min_cmd_count}，不需要生成新版本`
+        console.log(msg)
+        return { err: msg }
     }
     const _storage = await storage();
     const repo = new Repository()
@@ -157,8 +161,9 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
         await Promise.race([p, timeoutPromise])
     } catch (err) {
         console_util.enableConsole(console_util.ConsoleType.log)
-        console.log(`[${documentInfo.id}]generateNewVersion错误：coopRepo.receive错误`, err)
-        return
+        const msg = `[${documentInfo.id}]generateNewVersion错误：coopRepo.receive错误`
+        console.log(msg, err)
+        return { err: msg }
     }
     console_util.enableConsole(console_util.ConsoleType.log)
 
@@ -189,11 +194,12 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ documen
             if (buffer !== undefined) mediasSize += buffer.buff.byteLength;
         }
         const documentText = await document.getText()
-        return { documentInfo, lastCmdId, documentData, documentText, mediasSize, pageSvgs }
+        return { result: { documentInfo, lastCmdId, documentData, documentText, mediasSize, pageSvgs } }
 
     } catch (err) {
-        console.log(`[${documentInfo.id}]generateNewVersion错误：上传错误`, err)
-        return
+        const msg = `[${documentInfo.id}]generateNewVersion错误：上传错误`
+        console.log(msg, err)
+        return { err: msg }
     }
 
 }
@@ -204,9 +210,11 @@ export async function generate(documentId: string) {
     documentId = documentId + ""
     console.log("generate", documentId)
 
-    const documentInfo = await getDocument(documentId)
+    const documentInfo = await getDocument(documentId).catch(err => {
+        console.log(err)
+    })
     if (!documentInfo) {
-        return
+        return { err: "get document info fail: " + documentId }
     }
 
     const result = await generateNewVersion(documentInfo)

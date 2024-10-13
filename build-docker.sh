@@ -11,13 +11,25 @@
 NPM_USERNAME=6393d66c28b61c88e7f83906
 NPM_PASSWORD=z2tzwCltb1gk
 
-docker pull node:20-alpine
+docker pull node:22-alpine3.19
 
 container_name='kcversion'
 
+pre_version='1.0.1'
+builder_version='1.0.1'
 # 使用 docker images | grep 检查镜像是否存在
-if [ "$(docker images | grep ${container_name}-pre | awk '{print $2}' | sed 's/[^0-9.]*//g')" != "1.0.0" ]; then
-    docker build -t ${container_name}-pre:1.0.0 -f Dockerfile-pre . || exit $?
+if [ "$(docker images | grep ${container_name}-pre | awk '{print $2}' | sed 's/[^0-9.]*//g')" != "${pre_version}" ]; then
+    docker build -t ${container_name}-pre:${pre_version} -f Dockerfile-pre . || exit $?
+fi
+
+# 使用 docker images | grep 检查镜像是否存在
+if [ "$(docker images | grep ${container_name}-builder | awk '{print $2}' | sed 's/[^0-9.]*//g')" != "${builder_version}" ]; then
+    docker build \
+        -t ${container_name}-builder:${builder_version} \
+        -f Dockerfile-builder \
+        --build-arg NPM_USERNAME=$NPM_USERNAME \
+        --build-arg NPM_PASSWORD=$NPM_PASSWORD \
+        . || exit $?
 fi
 
 # 读取 package.json 中的版本号

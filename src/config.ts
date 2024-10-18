@@ -1,20 +1,15 @@
 
-type Mysql = {
-    host: string,
-    port: number,
-    user: string,
-    password: string,
-    database: string,
+type Db = {
+    url: string
 }
 
 type Mongodb = {
-    uri: string,
+    url: string,
     db: string
 }
 
-type Storage = {
-    type: string // 's3' | 'oss'
-    endPoint: string,
+type StorageProvider = {
+    endpoint: string,
     region: string,
     accessKeyID: string,
     secretAccessKey: string,
@@ -22,26 +17,20 @@ type Storage = {
     filesBucketName: string
 }
 
-// type UploadApi = {
-//     url: string
-// }
-
-// type Redis = {
-//     address: string,
-//     password: string,
-//     db: number,
-//     sentinel: string,
-//     sentinelAddrs: string[],
-//     masterName: string
-// }
+type Storage = {
+    provider: string,
+    minio?: StorageProvider,
+    s3?: StorageProvider,
+    oss?: StorageProvider
+}
 
 type Config = {
-    mysql: Mysql,
+    db: Db,
     mongo: Mongodb,
     storage: Storage
-    // redis: Redis
-    min_cmd_count: number
-    port: number
+    version_server: {
+        min_cmd_count: number
+    }
 }
 
 // sae的变量由env传递

@@ -57,6 +57,7 @@ app.use(router.allowedMethods())
 app.use(Static("/app/static"))
 
 let palInitFinished = false
+const port = 8080
 
 async function run() {
 
@@ -64,8 +65,8 @@ async function run() {
     await mongodb();
     await storage();
 
-    app.listen(config.port, () => {
-        console.log(`kcversion服务已启动 ${config.port}`)
+    app.listen(port, () => {
+        console.log(`kcversion服务已启动 ${port}`)
         palInit().then(() => palInitFinished = true).catch(err => console.log("palInit错误", err))
     })
 }

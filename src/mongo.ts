@@ -4,7 +4,7 @@ import config from "./config"
 let mongoDBClient: MongoClient
 async function connect() {
     try {
-        mongoDBClient = await MongoClient.connect(config.mongo.uri, {
+        mongoDBClient = await MongoClient.connect(config.mongo.url, {
             useBigInt64: true,
         })
     } catch (err) {

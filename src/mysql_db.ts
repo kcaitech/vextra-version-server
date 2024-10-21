@@ -2,17 +2,7 @@ import * as mysql from "mysql"
 import config from "./config"
 
 function mysqlCreateConnection() {
-    return mysql.createConnection({
-        host: config.mysql.host,
-        port: config.mysql.port,
-        user: config.mysql.user,
-        password: config.mysql.password,
-        database: config.mysql.database,
-        charset: "utf8mb4",
-        timezone: "local",
-        supportBigNumbers: true,
-        bigNumberStrings: true,
-    })
+    return mysql.createConnection(config.db.url)
 }
 
 const mysqlConn = mysqlCreateConnection()

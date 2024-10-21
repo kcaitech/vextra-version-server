@@ -137,8 +137,8 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ result?
         console.log(msg)
         return { err: msg }
     }
-    if (cmdList.length < config.min_cmd_count) {
-        const msg = `[${documentInfo.id}]cmd数量小于${config.min_cmd_count}，不需要生成新版本`
+    if (cmdList.length < config.version_server.min_cmd_count) {
+        const msg = `[${documentInfo.id}]cmd数量小于${config.version_server.min_cmd_count}，不需要生成新版本`
         console.log(msg)
         return { err: msg }
     }

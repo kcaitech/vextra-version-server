@@ -10,6 +10,7 @@ import Static from "koa-static"
 import { generate } from "./generate"
 import { mongodb } from "./mongo"
 import logger from "koa-logger"
+import { ServerPort } from "./consts"
 
 // import * as console_util from "./utils/console_util"
 // console_util.objectToStr()
@@ -57,7 +58,7 @@ app.use(router.allowedMethods())
 app.use(Static("/app/static"))
 
 let palInitFinished = false
-const port = 8080
+const port = ServerPort
 
 async function run() {
 

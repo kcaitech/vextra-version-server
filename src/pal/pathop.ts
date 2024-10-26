@@ -1,4 +1,5 @@
 import { IPalPath } from "@kcdesign/data";
+import { ServerPort } from "../consts";
 
 const PathKitInit = require('pathkit-wasm/bin/pathkit.js');
 
@@ -112,7 +113,6 @@ interface PathKitPath {
 
 
 
-const ServerPort = 10040 // 10040
 let _ck: PathKit;
 export async function init() {
     if (_ck) return;

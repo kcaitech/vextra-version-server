@@ -1,6 +1,11 @@
 
 type Db = {
-    url: string
+    // url: string
+    host: string,
+    user: string,
+    password: string,
+    port: number,
+    database: string
 }
 
 type Mongodb = {

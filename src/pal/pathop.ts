@@ -209,9 +209,11 @@ export class PalPath implements IPalPath {
         return this._path.op((path)._path, _ck.PathOp.UNION);
     }
     stroke(ops?: StrokeOpts) {
-        const path = this._path.stroke(ops); // return this
-        const ret = path ? path.toSVGString() : "";
-        return ret;
+        const path = this._path.stroke(ops);
+        if (!path) return "";
+        path.setFillType(FillType.WINDING);
+        path.simplify();
+        return path.toSVGString();
     }
     addPath(path: PalPath): boolean {
         this._path.addPath(path._path);

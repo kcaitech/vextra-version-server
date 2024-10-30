@@ -51,8 +51,9 @@ RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-
 
 # 不需要私有镜像仓库
 #RUN echo "registry=https://registry.npmmirror.com" >> ~/.npmrc
-
+#RUN npm i webpack && npm i
 RUN npm i typescript -g && npm i
+#RUN npm update
 RUN rm -f ~/.npmrc
 RUN ls | grep -v node_modules | xargs rm -rf
 
@@ -80,8 +81,9 @@ RUN echo "registry=https://packages.aliyun.com/6393d698d690c872dceedcc0/npm/npm-
 
 RUN npm i
 RUN rm -f ~/.npmrc
-RUN npm run build
-RUN rm -rf ./node_modules/skia-canvas
+RUN ./node_modules/.bin/webpack --config webpack.config.js --mode production
+RUN rm -rf ./node_modules/skia-canvas/lib/v6/index.node
+RUN mv ./skia-canvas/lib/v6/index.node ./node_modules/skia-canvas/lib/v6/index.node
 
 RUN mkdir -p /app/dist/log && touch /app/dist/log/all.log
-CMD npm i && node /app/dist/server.js | tee /app/dist/log/all.log 2>&1
+CMD node /app/dist/server.js | tee /app/dist/log/all.log 2>&1

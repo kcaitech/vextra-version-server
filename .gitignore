@@ -11,7 +11,7 @@ yarn.lock
 /src/log/
 /deployment/log/
 /deployment/.env
-/.env
+/deployment/.env
 /success.log
 /all.log
 /error.log

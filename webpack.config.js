@@ -24,5 +24,6 @@ module.exports = {
     output: {
         path: path.resolve(__dirname, "dist"),
         filename: "[name].js",
+        libraryTarget: "commonjs",  // 指定输出为 CommonJS 模块
     },
 };

@@ -24,6 +24,8 @@ RUN cat package.json | sed '/skia-canvas/d' > package1.json
 RUN rm -f package.json
 RUN mv package1.json package.json
 RUN npm i
+# 清空v6目录
+RUN rm -rf skia-canvas/lib/v6
 RUN mv skia-canvas/lib-linux-x64-musl/v6 skia-canvas/lib
 RUN mv skia-canvas node_modules
 

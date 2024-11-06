@@ -1,9 +1,7 @@
 import { Cmd, CoopRepository, ExFromJson, exportExForm, exportSvg, ICoopNet, ImageShape, importDocument, Page, parseCmds, RadixConvert, Repository, ShapeType } from "@kcdesign/data";
-import axios from "axios";
 import { DocumentInfo } from "./basic";
 import { mongodb } from "./mongo";
 import { db } from "./mysql_db";
-import FormData from "form-data"
 import { storage } from "./storage";
 import * as times_util from "./utils/times_util"
 import config from "./config";

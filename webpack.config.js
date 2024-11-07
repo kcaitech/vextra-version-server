@@ -3,7 +3,7 @@ const nodeExternals = require("webpack-node-externals")
 
 module.exports = {
     entry: {
-        "server": "./server.ts",
+        "server": "./src/server.ts",
     },
     target: "node",
     externals: [nodeExternals()],
@@ -13,9 +13,6 @@ module.exports = {
                 test: /\.tsx?$/,
                 use: {
                     loader: "ts-loader",
-                    options: {
-                        configFile: "./tsconfig.json",
-                    },
                 },
                 exclude: /node_modules/,
             },
@@ -23,10 +20,6 @@ module.exports = {
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
-        alias: {
-            "@": path.resolve(__dirname, ""),
-        },
-        mainFields: ['main', 'module', 'browser'],
     },
     output: {
         path: path.resolve(__dirname, "dist"),

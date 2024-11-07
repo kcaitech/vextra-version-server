@@ -20,9 +20,6 @@
       "jest",
       "node"
     ],
-    "paths": {
-      "@/*": ["*"]
-    },
     "lib": [
       "esnext",
       "dom",
@@ -31,16 +28,12 @@
     ]
   },
   "include": [
-    "**/*.ts",
+    "src/**/*.ts",
   ],
   "exclude": [
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "**/*.spec.tsx",
-    "**/*.test.tsx",
     "node_modules",
-    "dist",
     "deployment",
-    "test"
+    "tests",
+    "**/*.js"
   ]
 }

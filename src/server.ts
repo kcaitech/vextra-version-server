@@ -1,6 +1,5 @@
 
 import { db } from "./mysql_db"
-import config from "./config"
 import { init as palInit } from "./pal/init"
 import { storage } from "./storage"
 import * as exit_util from "./utils/exit_util"
@@ -11,9 +10,12 @@ import { generate } from "./generate"
 import { mongodb } from "./mongo"
 import logger from "koa-logger"
 import { ServerPort } from "./consts"
+import { shortLog } from "./utils/shortlog"
 
 // import * as console_util from "./utils/console_util"
 // console_util.objectToStr()
+
+shortLog()
 
 const app = new Koa()
 const router = new Router()

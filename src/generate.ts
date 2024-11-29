@@ -92,8 +92,8 @@ class CoopNet implements ICoopNet {
     async postCmds(cmds: Cmd[]): Promise<boolean> {
         return false;
     }
-    watchCmds(watcher: (cmds: Cmd[]) => void): void {
-
+    watchCmds(watcher: (cmds: Cmd[]) => void): () => void {
+        return () => {};
     }
 
     watchError(watcher: (errorInfo: any) => void): void {

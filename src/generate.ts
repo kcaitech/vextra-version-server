@@ -158,6 +158,7 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ result?
         })
         await Promise.race([p, timeoutPromise])
     } catch (err) {
+        coopRepo.quit() // 需要退出
         console_util.enableConsole(console_util.ConsoleType.log)
         const msg = `[${documentInfo.id}]generateNewVersion错误：coopRepo.receive错误`
         console.log(msg, err)

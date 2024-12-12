@@ -8,6 +8,7 @@ function mysqlCreateConnection() {
         user: config.db.user,
         password: config.db.password,
         port: config.db.port,
+        supportBigNumbers: true,
         bigNumberStrings: true
     })
 }

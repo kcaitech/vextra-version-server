@@ -1,4 +1,4 @@
-import * as boolop from "./pathop"
+
 import { Canvas, Path2D } from "skia-canvas"
 import * as fs from "fs"
 import {measure} from "./measure"
@@ -9,22 +9,22 @@ const path1 = `
 const path2 = `
     M 50 50 L 150 50 L 150 150 L 50 150 L 50 50 Z`
 
-async function testPath() {
-    const canvas = new Canvas(500, 500)
-    const ctx = canvas.getContext("2d")
+// async function testPath() {
+//     const canvas = new Canvas(500, 500)
+//     const ctx = canvas.getContext("2d")
 
-    await boolop.init()
-    const res = boolop.subtract(path1, path2)
-    ctx.beginPath()
-    ctx.fillStyle = "red"
-    ctx.fill(new Path2D(res))
-    ctx.closePath()
+//     await boolop.init()
+//     const res = boolop.subtract(path1, path2)
+//     ctx.beginPath()
+//     ctx.fillStyle = "red"
+//     ctx.fill(new Path2D(res))
+//     ctx.closePath()
 
-    const pngData = canvas.toBufferSync("png")
-    fs.writeFileSync("testPath.png", pngData)
-}
+//     const pngData = canvas.toBufferSync("png")
+//     fs.writeFileSync("testPath.png", pngData)
+// }
 
-testPath()
+// testPath()
 
 function testTextToPath(font: string, fontSize: number, charCode: number) {
     fontSize = Math.round(fontSize)

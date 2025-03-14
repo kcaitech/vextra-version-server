@@ -1,4 +1,4 @@
-import { Cmd, CoopRepository, ExFromJson, exportExForm, exportSvg, ICoopNet, ImageShape, importDocument, Page, parseCmds, RadixConvert, Repository, ShapeType } from "@kcdesign/data";
+import { Cmd, CoopRepository, ExFromJson, exportExForm, exportSvg, ICoopNet, ImageShape, importDocument, Page, parseCmds, RadixConvert, TransactDataGuard, ShapeType } from "@kcdesign/data";
 import { DocumentInfo } from "./basic";
 import { mongodb } from "./mongo";
 import { db } from "./mysql_db";
@@ -141,7 +141,7 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ result?
         return { err: msg }
     }
     const _storage = await storage();
-    const repo = new Repository()
+    const repo = new TransactDataGuard()
     const d = await importDocument(_storage, documentInfo.path, "", documentInfo.version_id, repo)
     const document = d.document
 

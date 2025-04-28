@@ -27,12 +27,12 @@ async function findCmdItem(documentId: string, startCmdId?: bigint, endCmdId?: b
     if (startCmdId === undefined && endCmdId === undefined) return Promise.resolve([]);
     const findQuery: any = {
         document_id: documentId,
-        _id: {},
+        ver_id: {},
     }
-    if (startCmdId !== undefined) findQuery._id["$gte"] = startCmdId;
-    if (endCmdId !== undefined) findQuery._id["$lte"] = endCmdId;
-    if (startCmdId === undefined && endCmdId === undefined) delete findQuery._id;
-    const findCursor = documentCollection.find(findQuery, { sort: { _id: 1 } })
+    if (startCmdId !== undefined) findQuery.ver_id["$gte"] = startCmdId;
+    if (endCmdId !== undefined) findQuery.ver_id["$lte"] = endCmdId;
+    if (startCmdId === undefined && endCmdId === undefined) delete findQuery.ver_id;
+    const findCursor = documentCollection.find(findQuery, { sort: { ver_id: 1 } })
     return await findCursor.toArray() as any as CmdItem[]
 }
 

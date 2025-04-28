@@ -1,13 +1,4 @@
 
-type Db = {
-    // url: string
-    host: string,
-    user: string,
-    password: string,
-    port: number,
-    database: string
-}
-
 type Mongodb = {
     url: string,
     db: string
@@ -30,12 +21,8 @@ type Storage = {
 }
 
 type Config = {
-    db: Db,
     mongo: Mongodb,
     storage: Storage
-    version_server: {
-        min_cmd_count: number
-    }
 }
 
 // sae的变量由env传递

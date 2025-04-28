@@ -1,53 +1,28 @@
-import { Cmd, CoopRepository, ExFromJson, exportExForm, exportSvg, ICoopNet, ImageShape, importDocument, Page, parseCmds, RadixConvert, TransactDataGuard, ShapeType } from "@kcdesign/data";
+import { Cmd, CoopRepository, ExFromJson, exportExForm, exportSvg, ICoopNet, ImageShape, importDocument, Page, parseCmds, TransactDataGuard, ShapeType } from "@kcdesign/data";
 import { DocumentInfo } from "./basic";
-import { mongodb } from "./mongo";
-import { db } from "./mysql_db";
 import { storage } from "./storage";
 import * as times_util from "./utils/times_util"
-import config from "./config";
 import * as console_util from "./utils/console_util"
-
-async function getDocument(documentId: string): Promise<DocumentInfo | undefined> {
-    const mysqlConn = await db();
-    return new Promise<DocumentInfo | undefined>((resolve, reject) => {
-        mysqlConn.query(`select d.id, d.path, d.version_id, dv.last_cmd_id
-from document d
-inner join document_version dv on dv.document_id=d.id and dv.version_id=d.version_id and dv.deleted_at is null
-where d.id=${documentId} and d.deleted_at is null
-limit 1`,
-            (err, rows) => {
-                if (err) reject(err);
-                const _rows = rows as DocumentInfo[]
-                resolve(_rows.length > 0 ? _rows[0] : undefined)
-            },
-        )
-    })
-}
-
-type _Cmd = {
-    baseVer: string,
-    batchId: string,
-    ops: any[],
-    isRecovery: boolean,
-    description: string,
-    time: bigint,
-    posttime: bigint,
-}
+import { mongodb } from "./mongo";
 
 type CmdItem = {
-    _id: bigint
-    previous_id: bigint
-    batch_start_id: bigint
-    batch_end_id: bigint
-    batch_length: number
-    document_id: bigint
-    user_id: bigint
-    cmd: _Cmd
-    cmd_id: string
+    baseVer: number;
+    batchId: string;
+    batchLength: number;
+    batchStart: number;
+    dataFmtVer: string;
+    description: string;
+    documentId: string;
+    id: string;
+    isRecovery: boolean;
+    ops: any[]; // 具体类型可根据实际情况替换
+    posttime: string;
+    time: string;
+    userId: string;
+    version: number;
 }
 
-async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: bigint): Promise<CmdItem[]> {
-    // let mongoDB = mongoDBClient.db("kcserver")
+async function findCmdItem(documentId: string, startCmdId?: bigint, endCmdId?: bigint): Promise<CmdItem[]> {
     const documentCollection = await mongodb();
     if (startCmdId === undefined && endCmdId === undefined) return Promise.resolve([]);
     const findQuery: any = {
@@ -63,29 +38,35 @@ async function findCmdItem(documentId: bigint, startCmdId?: bigint, endCmdId?: b
 
 function parseCmdList(cmdItemList: CmdItem[]): Cmd[] {
     return parseCmds(cmdItemList.map(cmdItem => {
-        const cmd = cmdItem.cmd as any
-        cmd.id = cmdItem.cmd_id
-        cmd.version = radixRevert.from(cmdItem._id)
-        cmd.previousVersion = radixRevert.from(cmdItem.previous_id)
-        cmd.time = Number(cmd.time)
-        cmd.posttime = Number(cmd.posttime)
+        const cmd: Cmd = {
+            id: cmdItem.id,
+            ops: cmdItem.ops,
+            version: cmdItem.version,
+            baseVer: cmdItem.baseVer,
+            batchId: cmdItem.batchId,
+            isRecovery: cmdItem.isRecovery,
+            description: cmdItem.description,
+            time: Number(cmdItem.time),
+            posttime: Number(cmdItem.posttime),
+            dataFmtVer: cmdItem.dataFmtVer
+        };
         return cmd
     }))
 }
 
-const radixRevert = new RadixConvert(62)
 
 class CoopNet implements ICoopNet {
-    private documentId: bigint
-    constructor(documentId: bigint) {
+    private documentId: string
+    constructor(documentId: string) {
         this.documentId = documentId
     }
+
     hasConnected(): boolean {
         return true;
     }
-    async pullCmds(from: string, to: string): Promise<Cmd[]> {
-        const startCmdId = from ? radixRevert.to(from) : 0n
-        const endCmdId = to ? radixRevert.to(to) : undefined
+    async pullCmds(from: number, to: number): Promise<Cmd[]> {
+        const startCmdId = from ? BigInt(from) : 0n
+        const endCmdId = to ? BigInt(to) : undefined
         const cmdItemList = await findCmdItem(this.documentId, startCmdId, endCmdId)
         return parseCmdList(cmdItemList)
     }
@@ -93,7 +74,7 @@ class CoopNet implements ICoopNet {
         return false;
     }
     watchCmds(watcher: (cmds: Cmd[]) => void): () => void {
-        return () => {};
+        return () => { };
     }
 
     watchError(watcher: (errorInfo: any) => void): void {
@@ -125,29 +106,25 @@ class CoopNet implements ICoopNet {
 //     return response.data
 // }
 
-type GenResult = { documentInfo: DocumentInfo, lastCmdId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageSvgs: string[] }
+type GenResult = { documentInfo: DocumentInfo, lastCmdVerId: string, documentData: ExFromJson, documentText: string, mediasSize: number, pageSvgs: string[] }
 
-async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ result?: GenResult, err?: string }> {
-    const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
+async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdItem[]): Promise<{ result?: GenResult, err?: string }> {
+    // const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0) {
         const msg = `[${documentInfo.id}]无新cmd，不需要生成新版本`
         console.log(msg)
         return { err: msg }
     }
-    if (cmdList.length < config.version_server.min_cmd_count) {
-        const msg = `[${documentInfo.id}]cmd数量小于${config.version_server.min_cmd_count}，不需要生成新版本`
-        console.log(msg)
-        return { err: msg }
-    }
+
     const _storage = await storage();
     const repo = new TransactDataGuard()
     const d = await importDocument(_storage, documentInfo.path, "", documentInfo.version_id, repo)
     const document = d.document
 
     const coopRepo = new CoopRepository(document, repo)
-    coopRepo.setNet(new CoopNet(BigInt(documentInfo.id)))
-    coopRepo.setBaseVer(radixRevert.from(documentInfo.last_cmd_id))
+    coopRepo.setNet(new CoopNet(documentInfo.id))
+    coopRepo.setBaseVer(Number(BigInt(documentInfo.last_cmd_id)))
     try {
         const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {
@@ -186,14 +163,14 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ result?
     try {
         const documentData = await exportExForm(document)
 
-        const lastCmdId = cmdItemList[cmdItemList.length - 1]._id.toString(10)
+        const lastCmdVerId = cmdItemList[cmdItemList.length - 1].version.toString(10)
         let mediasSize = 0
         for (let i = 0, len = documentData.media_names.length; i < len; i++) {
             const buffer = await document.mediasMgr.get(documentData.media_names[i])
             if (buffer !== undefined) mediasSize += buffer.buff.byteLength;
         }
         const documentText = await document.getText()
-        return { result: { documentInfo, lastCmdId, documentData, documentText, mediasSize, pageSvgs } }
+        return { result: { documentInfo, lastCmdVerId, documentData, documentText, mediasSize, pageSvgs } }
 
     } catch (err) {
         const msg = `[${documentInfo.id}]generateNewVersion错误：上传错误`
@@ -204,18 +181,6 @@ async function generateNewVersion(documentInfo: DocumentInfo): Promise<{ result?
 }
 
 
-export async function generate(documentId: string) {
-
-    documentId = documentId + ""
-    console.log("generate", documentId)
-
-    const documentInfo = await getDocument(documentId).catch(err => {
-        console.log(err)
-    })
-    if (!documentInfo) {
-        return { err: "get document info fail: " + documentId }
-    }
-
-    const result = await generateNewVersion(documentInfo)
-    return result;
+export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[]) {
+    return await generateNewVersion(documentInfo, cmdItemList)
 }

@@ -22,7 +22,7 @@ type CmdItem = {
     version: number;
 }
 
-async function findCmdItem(documentId: string, startCmdId?: bigint, endCmdId?: bigint): Promise<CmdItem[]> {
+async function findCmdItem(documentId: string, startCmdId?: number, endCmdId?: number): Promise<CmdItem[]> {
     const documentCollection = await mongodb();
     if (startCmdId === undefined && endCmdId === undefined) return Promise.resolve([]);
     const findQuery: any = {
@@ -65,8 +65,8 @@ class CoopNet implements ICoopNet {
         return true;
     }
     async pullCmds(from: number, to: number): Promise<Cmd[]> {
-        const startCmdId = from ? BigInt(from) : 0n
-        const endCmdId = to ? BigInt(to) : undefined
+        const startCmdId = from ? (from) : 0
+        const endCmdId = to ? (to) : undefined
         const cmdItemList = await findCmdItem(this.documentId, startCmdId, endCmdId)
         return parseCmdList(cmdItemList)
     }
@@ -124,7 +124,7 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
 
     const coopRepo = new CoopRepository(document, repo)
     coopRepo.setNet(new CoopNet(documentInfo.id))
-    coopRepo.setBaseVer(Number(BigInt(documentInfo.last_cmd_id)))
+    coopRepo.setBaseVer(Number(documentInfo.last_cmd_id))
     try {
         const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {

@@ -12,22 +12,18 @@ import logger from "koa-logger"
 import { ServerPort } from "./consts"
 import { shortLog } from "./utils/shortlog"
 import { mongodb } from "./mongo"
-import yargs from "yargs"
-import { hideBin } from "yargs/helpers"
+import minimist from "minimist"
 
 // import * as console_util from "./utils/console_util"
 // console_util.objectToStr()
 
 // 解析命令行参数
-const argv = yargs(hideBin(process.argv))
-    .option("port", {
-        alias: "p",
-        type: "number",
-        description: "服务器端口号",
-        default: ServerPort
-    })
-    .help()
-    .argv as any
+const argv = minimist(process.argv.slice(2), {
+    string: ["port"],
+    default: {
+        port: ServerPort.toString()
+    }
+});
 
 shortLog()
 
@@ -80,7 +76,7 @@ app.use(router.allowedMethods())
 app.use(Static("/app/static"))
 
 let palInitFinished = false
-const port = argv.port
+const port = parseInt(argv.port)
 
 async function run() {
     await storage();

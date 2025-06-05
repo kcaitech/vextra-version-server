@@ -33,6 +33,7 @@
     },
     "dependencies": {
         "@kcdesign/data": "file:../kcdesign-data",
+        "@types/minimist": "^1.2.5",
         "ali-oss": "^6.18.1",
         "aws-sdk": "^2.1423.0",
         "axios": "^1.6.8",
@@ -47,6 +48,7 @@
         "koa-logger": "^3.2.1",
         "koa-router": "^12.0.1",
         "koa-static": "^5.0.0",
+        "minimist": "^1.2.8",
         "mongodb": "^6.3.0",
         "mysql": "^2.18.1",
         "path-browserify": "^1.0.1",
@@ -55,7 +57,6 @@
         "string-split-by": "^1.0.0",
         "tslib": "^2.6.0",
         "uuid": "^9.0.1",
-        "ws": "^8.13.0",
-        "yargs": "^18.0.0"
+        "ws": "^8.13.0"
     }
 }

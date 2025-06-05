@@ -22,7 +22,12 @@ const app = new Koa()
 const router = new Router()
 
 app.use(logger())
-app.use(bodyParser())
+app.use(bodyParser({
+    jsonLimit: '2mb',
+    formLimit: '2mb',
+    textLimit: '2mb',
+    xmlLimit: '2mb'
+}))
 
 router.get("/health_check", async (ctx, next) => {
     if (!palInitFinished) {

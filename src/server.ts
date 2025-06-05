@@ -32,7 +32,7 @@ const router = new Router()
 
 app.use(logger())
 app.use(bodyParser({
-    jsonLimit: '2mb',
+    jsonLimit: '10mb',
     formLimit: '2mb',
     textLimit: '2mb',
     xmlLimit: '2mb'

@@ -19,7 +19,7 @@ export async function mongodb() {
     if (!_documentCollection) {
         await connect();
         const mongoDB = mongoDBClient.db(config.mongo.db)
-        _documentCollection = mongoDB.collection("document1")
+        _documentCollection = mongoDB.collection("document")
     }
     return _documentCollection;
 }

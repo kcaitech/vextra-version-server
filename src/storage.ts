@@ -1,4 +1,4 @@
-import { IStorage } from "@kcdesign/data"
+import { IO } from "@kcdesign/data"
 
 export type StorageOptions = {
     endPoint: string
@@ -13,7 +13,7 @@ import AWS from "aws-sdk"
 
 AWS.config.correctClockSkew = true
 
-export class S3Storage implements IStorage {
+export class S3Storage implements IO.IStorage {
     private client: AWS.S3
     private options: StorageOptions
 
@@ -74,7 +74,7 @@ export class S3Storage implements IStorage {
 import OSS from "ali-oss"
 import config from "./config"
 
-export class OssStorage implements IStorage {
+export class OssStorage implements IO.IStorage {
     private client: OSS
     // private options: StorageOptions
 
@@ -125,7 +125,7 @@ export class OssStorage implements IStorage {
 }
 
 
-let _storage: IStorage
+let _storage: IO.IStorage
 export async function storage() {
     if (!_storage) {
         const storageConfig = config.storage

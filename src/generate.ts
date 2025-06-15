@@ -1,4 +1,4 @@
-import { ImageShape, Page, TransactDataGuard, ShapeType, Coop, IO, basicio } from "@kcdesign/data";
+import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO, basicio } from "@kcdesign/data";
 import { DocumentInfo } from "./basic";
 import { storage } from "./storage";
 import * as times_util from "./utils/times_util"
@@ -36,9 +36,9 @@ async function findCmdItem(documentId: string, startCmdId?: number, endCmdId?: n
     return await findCursor.toArray() as any as CmdItem[]
 }
 
-function parseCmdList(cmdItemList: CmdItem[]): Coop.Cmd[] {
-    return Coop.parseCmds(cmdItemList.map(cmdItem => {
-        const cmd: Coop.Cmd = {
+function parseCmdList(cmdItemList: CmdItem[]): Repo.Cmd[] {
+    return Repo.parseCmds(cmdItemList.map(cmdItem => {
+        const cmd: Repo.Cmd = {
             id: cmdItem.id,
             ops: cmdItem.ops,
             version: cmdItem.version,
@@ -55,7 +55,7 @@ function parseCmdList(cmdItemList: CmdItem[]): Coop.Cmd[] {
 }
 
 
-class CoopNet implements Coop.ICoopNet {
+class CoopNet implements Repo.ICoopNet {
     private documentId: string
     constructor(documentId: string) {
         this.documentId = documentId
@@ -64,16 +64,16 @@ class CoopNet implements Coop.ICoopNet {
     hasConnected(): boolean {
         return true;
     }
-    async pullCmds(from: number, to: number): Promise<Coop.Cmd[]> {
+    async pullCmds(from: number, to: number): Promise<Repo.Cmd[]> {
         const startCmdId = from ? (from) : 0
         const endCmdId = to ? (to) : undefined
         const cmdItemList = await findCmdItem(this.documentId, startCmdId, endCmdId)
         return parseCmdList(cmdItemList)
     }
-    async postCmds(cmds: Coop.Cmd[]): Promise<boolean> {
+    async postCmds(cmds: Repo.Cmd[]): Promise<boolean> {
         return false;
     }
-    watchCmds(watcher: (cmds: Coop.Cmd[]) => void): () => void {
+    watchCmds(watcher: (cmds: Repo.Cmd[]) => void): () => void {
         return () => { };
     }
 
@@ -122,7 +122,7 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
     const d = await IO.importRemote(_storage, documentInfo.path, "", documentInfo.version_id, repo)
     const document = d.document
 
-    const coopRepo = new Coop.CoopRepository(document, repo)
+    const coopRepo = new Repo.CoopRepository(document, repo)
     coopRepo.setNet(new CoopNet(documentInfo.id))
     coopRepo.setBaseVer(Number(documentInfo.last_cmd_id))
     try {

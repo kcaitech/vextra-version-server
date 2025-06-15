@@ -55,7 +55,7 @@ function parseCmdList(cmdItemList: CmdItem[]): Repo.Cmd[] {
 }
 
 
-class CoopNet implements Repo.ICoopNet {
+class CoopNet implements Repo.INet {
     private documentId: string
     constructor(documentId: string) {
         this.documentId = documentId

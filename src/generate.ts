@@ -1,4 +1,4 @@
-import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO, basicio } from "@kcdesign/data";
+import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO, Coop } from "@kcdesign/data";
 import { DocumentInfo } from "./basic";
 import { storage } from "./storage";
 import * as times_util from "./utils/times_util"
@@ -122,7 +122,7 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
     const d = await IO.importRemote(_storage, documentInfo.path, "", documentInfo.version_id, repo)
     const document = d.document
 
-    const coopRepo = new Repo.CoopRepository(document, repo)
+    const coopRepo = new Coop.CoopRepository(document, repo)
     coopRepo.setNet(new CoopNet(documentInfo.id))
     coopRepo.setBaseVer(Number(documentInfo.last_cmd_id))
     try {

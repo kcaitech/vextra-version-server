@@ -33,6 +33,7 @@
     },
     "dependencies": {
         "@kcdesign/data": "file:../kcdesign-data",
+        "@kcdesign/coop": "file:../kcdesign-coop",
         "@types/minimist": "^1.2.5",
         "ali-oss": "^6.18.1",
         "aws-sdk": "^2.1423.0",

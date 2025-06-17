@@ -1,9 +1,10 @@
-import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO, Coop } from "@kcdesign/data";
+import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO } from "@kcdesign/data";
 import { DocumentInfo } from "./basic";
 import { storage } from "./storage";
 import * as times_util from "./utils/times_util"
 import * as console_util from "./utils/console_util"
 import { mongodb } from "./mongo";
+import { CoopRepository, parseCmds } from "@kcdesign/coop";
 
 type CmdItem = {
     baseVer: number;
@@ -37,7 +38,7 @@ async function findCmdItem(documentId: string, startCmdId?: number, endCmdId?: n
 }
 
 function parseCmdList(cmdItemList: CmdItem[]): Repo.Cmd[] {
-    return Repo.parseCmds(cmdItemList.map(cmdItem => {
+    return parseCmds(cmdItemList.map(cmdItem => {
         const cmd: Repo.Cmd = {
             id: cmdItem.id,
             ops: cmdItem.ops,
@@ -122,13 +123,13 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
     const d = await IO.importRemote(_storage, documentInfo.path, "", documentInfo.version_id, repo)
     const document = d.document
 
-    const coopRepo = new Coop.CoopRepository(document, repo)
+    const coopRepo = new CoopRepository(document, repo)
     coopRepo.setNet(new CoopNet(documentInfo.id))
     coopRepo.setBaseVer(Number(documentInfo.last_cmd_id))
     try {
         const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {
-            coopRepo.setProcessCmdsTrigger(() => {
+            coopRepo.onProcessedReceiveCmds(() => {
                 resolve()
             })
             coopRepo.receive(cmdList)

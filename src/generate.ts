@@ -1,4 +1,4 @@
-import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO } from "@kcdesign/data";
+import { Page, TransactDataGuard, Repo, IO, Shape } from "@kcdesign/data";
 import { DocumentInfo } from "./basic";
 import { storage } from "./storage";
 import * as times_util from "./utils/times_util"
@@ -151,10 +151,7 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
         const page = await document.pagesMgr.get(_page.id);
         if (!page) continue;
         pageList.push(page)
-        imageRefList.push(...(Array.from(page.shapes.values())
-            .filter(shape => shape.type === ShapeType.Image) as ImageShape[])
-            .map(shape => shape.imageRef)
-        )
+        imageRefList.push(...getImageRefList(Array.from(page.shapes.values() as Shape[])))
     }
     const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => { })
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
@@ -184,4 +181,12 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
 
 export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[]) {
     return await generateNewVersion(documentInfo, cmdItemList)
+}
+
+
+function getImageRefList(shapes: Shape[]): string[] {
+    return shapes
+        .filter(shape => shape.style.fills.length > 0)
+        .map(shape => shape.style.fills[0].imageRef as string)
+        .filter(ref => ref !== undefined)
 }

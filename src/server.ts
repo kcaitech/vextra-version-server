@@ -38,6 +38,11 @@ app.use(bodyParser({
     xmlLimit: '2mb'
 }))
 
+// 用于处理循环引用的函数
+function safeStringify(obj: any): any {
+    return JSON.parse(JSON.stringify(obj, (k, v) => k.startsWith('__') ? undefined : v))
+}
+
 router.get("/health_check", async (ctx, next) => {
     if (!palInitFinished) {
         ctx.status = 500
@@ -64,7 +69,7 @@ router.post("/generate", async (ctx, next) => {
     const { result, err } = await generate(documentInfo, cmdItemList);
     
     if (result) {
-        ctx.body = result;
+        ctx.body = safeStringify(result);
     } else {
         ctx.status = 202;
         ctx.body = err;

@@ -5,6 +5,8 @@ const textPathCache: Map<string, string> = new Map()
 export function getTextPath(font: string, fontSize: number, italic: boolean, weight: number, charCode: number) {
     fontSize = Math.round(fontSize)
 
+    if (fontSize === 0) return "";
+
     const cacheId = font + "#" + fontSize + "#" + charCode + (italic ? '#i' : '') + '#' + weight;
     let path = textPathCache.get(cacheId)
     if (path) return path;

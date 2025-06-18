@@ -151,7 +151,7 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
         const page = await document.pagesMgr.get(_page.id);
         if (!page) continue;
         pageList.push(page)
-        imageRefList.push(...getImageRefList(Array.from(page.shapes.values() as Shape[])))
+        imageRefList.push(...getImageRefList(Array.from(page.shapes.values())))
     }
     const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => { })
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
@@ -185,8 +185,15 @@ export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[
 
 
 function getImageRefList(shapes: Shape[]): string[] {
-    return shapes
-        .filter(shape => shape.style.fills.length > 0)
-        .map(shape => shape.style.fills[0].imageRef as string)
-        .filter(ref => ref !== undefined)
+    const imageRefList: string[] = []
+    for (const shape of shapes) {
+        if (shape.style.fills.length > 0) {
+            for (const fill of shape.style.fills) {
+                if (fill.imageRef) {
+                    imageRefList.push(fill.imageRef)
+                }
+            }
+        }
+    }
+    return imageRefList
 }

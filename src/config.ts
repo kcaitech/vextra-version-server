@@ -4,7 +4,8 @@ type Mongodb = {
     db: string
 }
 
-type StorageProvider = {
+type Storage = {
+    provider: string,
     endpoint: string,
     region: string,
     accessKeyID: string,
@@ -13,12 +14,12 @@ type StorageProvider = {
     filesBucketName: string
 }
 
-type Storage = {
-    provider: string,
-    minio?: StorageProvider,
-    s3?: StorageProvider,
-    oss?: StorageProvider
-}
+// type Storage = {
+//     provider: string,
+//     minio?: StorageProvider,
+//     s3?: StorageProvider,
+//     oss?: StorageProvider
+// }
 
 type Config = {
     mongo: Mongodb,
@@ -29,18 +30,15 @@ type Config = {
 // k8s可由configmap或者secret进行文件挂载
 import yaml from "js-yaml"
 import fs from "fs"
-import example from "../config/config.json"
-function compile_check(_: Config) { }
-compile_check(example)
 
-let config: Config = example;
+let config: Config;
 const configfile = 'config/config.yaml'
-if (process.env.kcconfig) {
-    config = Object.assign(config, JSON.parse(process.env.kcconfig));
+
+if (!fs.existsSync(configfile)) {
+    throw new Error(`config file ${configfile} not found`)
 }
-else if (fs.existsSync(configfile)) {
-    const cf = fs.readFileSync(configfile);
-    config = Object.assign(config, yaml.load(cf.toString()));
-}
+
+const cf = fs.readFileSync(configfile);
+config = yaml.load(cf.toString());
 
 export default config;

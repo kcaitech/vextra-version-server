@@ -3,11 +3,11 @@ import { storage } from "./provider/storage"
 import * as exit_util from "./utils/exit_util"
 import express from "express"
 import morgan from "morgan"
-import { ServerPort } from "./consts"
+import { ServerPort } from "./config"
 import { shortLog } from "./utils/shortlog"
 import { mongodb } from "./provider/mongo"
 import yargs from "yargs"
-import { generate_handler } from "./handler/genh"
+import { generate_handler } from "./handler/generate_handler"
 
 // 解析命令行参数
 // 用yargs从运行参数中获取token

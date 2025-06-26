@@ -1,5 +1,5 @@
 import { initModule as initDataModule } from "@kcdesign/data"
-import { text2path } from "./textpath"
+import { text2path } from "./text2path"
 import { measure } from "./measure"
 import { Path2D, Canvas, Image, DOMMatrix } from "skia-canvas"
 

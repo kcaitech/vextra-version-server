@@ -1,3 +1,4 @@
+export const ServerPort = 30000
 
 type Mongodb = {
     url: string,

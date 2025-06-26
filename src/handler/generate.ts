@@ -86,7 +86,7 @@ function saveFile(
 
 type GenResult = { documentInfo: DocumentInfo, lastCmdVerId: string, documentData: IO.ExFromJson, documentText: string, mediasSize: number, pages_png_generated: string[] }
 
-export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[], force: boolean, gen_png?: { tmp_dir: string, pages: { page_id: string, file_name: string }[] }): Promise<{ result?: GenResult, err?: string }> {
+export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[], force: boolean, gen_pages_png?: { tmp_dir: string }): Promise<{ result?: GenResult, err?: string }> {
     const cmdList = parseCmdList(cmdItemList)
     if (cmdList.length === 0 && !force) {
         const msg = `[${documentInfo.id}]无新cmd，不需要生成新版本`
@@ -137,18 +137,13 @@ export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[
 
     // 导出page图片
     const pages_png_generated: string[] = []
-    if (gen_png) {
-        const page_png_tmp_files = new Map<string, string>()
-        gen_png.pages.forEach(page_png => {
-            page_png_tmp_files.set(page_png.page_id, page_png.file_name)
-        })
-
+    if (gen_pages_png) {
+        const tmp_dir = gen_pages_png.tmp_dir
         await Promise.all(pageList.map(async (page) => {
-            const tmp_file_name = page_png_tmp_files.get(page.id)
-            if (!tmp_file_name) return;
+            const tmp_file_name = page.id + ".png"
             const canvas = await IO.exportImg(page) as unknown as Canvas;
             const png = await canvas.png
-            saveFile(tmp_file_name, gen_png.tmp_dir, new Uint8Array(png))
+            saveFile(tmp_file_name, tmp_dir, new Uint8Array(png))
             pages_png_generated.push(tmp_file_name)
         }))
     }

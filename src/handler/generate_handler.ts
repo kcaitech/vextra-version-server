@@ -8,12 +8,8 @@ export async function generate_handler (req: Request, res: Response) {
         documentInfo: DocumentInfo,
         cmdItemList: CmdItem[],
         force?: boolean,
-        gen_png?: {
+        gen_pages_png?: {
             tmp_dir: string,
-            pages: {
-                page_id: string,
-                file_name: string,
-            }[]
         }
     };
     const documentInfo = reqParams.documentInfo;
@@ -23,7 +19,7 @@ export async function generate_handler (req: Request, res: Response) {
         return;
     }
 
-    const { result, err } = await generate(documentInfo, cmdItemList, !!reqParams.force, reqParams.gen_png);
+    const { result, err } = await generate(documentInfo, cmdItemList, !!reqParams.force, reqParams.gen_pages_png);
 
     if (result) {
         res.json(result);

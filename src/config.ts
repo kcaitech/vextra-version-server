@@ -39,6 +39,8 @@ if (!fs.existsSync(configfile)) {
 }
 
 const cf = fs.readFileSync(configfile);
-config = yaml.load(cf.toString());
+config = yaml.load(cf.toString()) as Config;
+
+console.log("config", config)
 
 export default config;

@@ -1,5 +1,5 @@
 import { Collection, Document, MongoClient } from "mongodb"
-import config from "./config"
+import config from "../config"
 
 let mongoDBClient: MongoClient
 async function connect() {

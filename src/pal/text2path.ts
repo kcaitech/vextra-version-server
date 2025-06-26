@@ -2,7 +2,7 @@ import { Canvas } from "skia-canvas"
 import { Path } from "@kcdesign/data";
 
 const textPathCache: Map<string, string> = new Map()
-export function getTextPath(font: string, fontSize: number, italic: boolean, weight: number, charCode: number) {
+export function text2path(font: string, fontSize: number, italic: boolean, weight: number, charCode: number) {
     fontSize = Math.round(fontSize)
 
     const cacheId = font + "#" + fontSize + "#" + charCode + (italic ? '#i' : '') + '#' + weight;

@@ -72,7 +72,7 @@ export class S3Storage implements IO.IStorage {
 }
 
 import OSS from "ali-oss"
-import config from "./config"
+import config from "../config"
 
 export class OssStorage implements IO.IStorage {
     private client: OSS
@@ -129,28 +129,19 @@ let _storage: IO.IStorage
 export async function storage() {
     if (!_storage) {
         const storageConfig = config.storage
-        let _config
-        if (storageConfig.provider === "oss") {
-            _config = storageConfig.oss
-        } else if (storageConfig.provider === "minio") {
-            _config = storageConfig.minio
-        } else if (storageConfig.provider === "s3") {
-            _config = storageConfig.s3
-        } else {
-            throw new Error("unknow storage provider:" + storageConfig.provider + ". only support: oss, minio, s3")
-        }
-        if (!_config) {
-            throw new Error("no storage config for " + storageConfig.provider)
+        const provider = storageConfig.provider
+
+        if (provider !== "oss" && provider !== "minio" && provider !== "s3") {
+            throw new Error("unknow storage provider:" + provider + ". only support: oss, minio, s3")
         }
 
         const storageOptions: StorageOptions = {
-            endPoint: _config.endpoint,
-            region: _config.region,
-            accessKey: _config.accessKeyID,
-            secretKey: _config.secretAccessKey,
-            bucketName: _config.bucketName,
+            endPoint: storageConfig.endpoint,
+            region: storageConfig.region,
+            accessKey: storageConfig.accessKeyID,
+            secretKey: storageConfig.secretAccessKey,
+            bucketName: storageConfig.bucketName,
         }
-        // console.log("storage info:", storageOptions)
         _storage = config.storage.provider === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
     }
     return _storage;

@@ -1,27 +1,14 @@
 import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO } from "@kcdesign/data";
-import { DocumentInfo } from "./basic";
-import { storage } from "./storage";
-import * as times_util from "./utils/times_util"
-import * as console_util from "./utils/console_util"
-import { mongodb } from "./mongo";
+import { CmdItem, DocumentInfo } from "./types";
+import { storage } from "../provider/storage";
+import * as times_util from "../utils/times_util"
+import * as console_util from "../utils/console_util"
+import { mongodb } from "../provider/mongo";
 import { CoopRepository, parseCmds } from "@kcdesign/coop";
+import path from "path";
+import fs from "fs";
+import { Canvas } from "skia-canvas";
 
-type CmdItem = {
-    baseVer: number;
-    batchId: string;
-    batchLength: number;
-    batchStart: number;
-    dataFmtVer: string;
-    description: string;
-    documentId: string;
-    id: string;
-    isRecovery: boolean;
-    ops: any[]; // 具体类型可根据实际情况替换
-    posttime: string;
-    time: string;
-    userId: string;
-    version: number;
-}
 
 async function findCmdItem(documentId: string, startCmdId?: number, endCmdId?: number): Promise<CmdItem[]> {
     const documentCollection = await mongodb();
@@ -83,36 +70,25 @@ class CoopNet implements Repo.INet {
     }
 }
 
-// async function svgToPng(svgContent: string): Promise<Buffer> {
-//     const svgBuffer = Buffer.from(svgContent, "utf-8")
+function saveFile(
+    fileName: string,
+    localPath: string,
+    data: Uint8Array,
+): string {
+    const fullPath = path.join(localPath, fileName);
+    // Ensure local path exists
+    if (!fs.existsSync(localPath)) {
+        fs.mkdirSync(localPath, { recursive: true });
+    }
+    fs.writeFileSync(fullPath, data);
+    return fullPath;
+}
 
-//     const form = new FormData()
-//     form.append("svg", svgBuffer, {
-//         filename: "image.svg",
-//         contentType: "image/svg+xml",
-//     })
+type GenResult = { documentInfo: DocumentInfo, lastCmdVerId: string, documentData: IO.ExFromJson, documentText: string, mediasSize: number, pages_png_generated: string[] }
 
-//     const response = await axios.post<Buffer>("http://svg-to-png.kc.svc.cluster.local:10050/svg_to_png", form, {
-//         headers: {
-//             ...form.getHeaders()
-//         },
-//         responseType: "arraybuffer",
-//         timeout: 1000 * 10,
-//     })
-//     if (response.status !== 200) {
-//         console.log("svgToPng错误", response.status, response.data)
-//         throw new Error("svgToPng错误")
-//     }
-
-//     return response.data
-// }
-
-type GenResult = { documentInfo: DocumentInfo, lastCmdVerId: string, documentData: IO.ExFromJson, documentText: string, mediasSize: number, pageSvgs: string[] }
-
-async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdItem[]): Promise<{ result?: GenResult, err?: string }> {
-    // const cmdItemList = await findCmdItem(BigInt(documentInfo.id), BigInt(documentInfo.last_cmd_id) + 1n)
+export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[], force: boolean, gen_png?: { tmp_dir: string, pages: { page_id: string, file_name: string }[] }): Promise<{ result?: GenResult, err?: string }> {
     const cmdList = parseCmdList(cmdItemList)
-    if (cmdList.length === 0) {
+    if (cmdList.length === 0 && !force) {
         const msg = `[${documentInfo.id}]无新cmd，不需要生成新版本`
         console.log(msg)
         return { err: msg }
@@ -144,7 +120,6 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
     }
     console_util.enableConsole(console_util.ConsoleType.log)
 
-    // 导出page图片
     const pageList: Page[] = []
     const imageRefList: string[] = []
     for (const _page of document.pagesList) {
@@ -160,10 +135,26 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
     await Promise.race([imageAllLoadPromise, timeoutPromise])
 
-    const pageSvgs = pageList.map(page => IO.exportSvg(page))
+    // 导出page图片
+    const pages_png_generated: string[] = []
+    if (gen_png) {
+        const page_png_tmp_files = new Map<string, string>()
+        gen_png.pages.forEach(page_png => {
+            page_png_tmp_files.set(page_png.page_id, page_png.file_name)
+        })
+
+        await Promise.all(pageList.map(async (page) => {
+            const tmp_file_name = page_png_tmp_files.get(page.id)
+            if (!tmp_file_name) return;
+            const canvas = await IO.exportImg(page) as unknown as Canvas;
+            const png = await canvas.png
+            saveFile(tmp_file_name, gen_png.tmp_dir, new Uint8Array(png))
+            pages_png_generated.push(tmp_file_name)
+        }))
+    }
+
     try {
         const documentData = await IO.exportExForm(document)
-
         const lastCmdVerId = cmdItemList[cmdItemList.length - 1].version.toString(10)
         let mediasSize = 0
         for (let i = 0, len = documentData.media_names.length; i < len; i++) {
@@ -171,17 +162,10 @@ async function generateNewVersion(documentInfo: DocumentInfo, cmdItemList: CmdIt
             if (buffer !== undefined) mediasSize += buffer.buff.byteLength;
         }
         const documentText = await document.getText()
-        return { result: { documentInfo, lastCmdVerId, documentData, documentText, mediasSize, pageSvgs } }
-
+        return { result: { documentInfo, lastCmdVerId, documentData, documentText, mediasSize, pages_png_generated } }
     } catch (err) {
         const msg = `[${documentInfo.id}]generateNewVersion错误：上传错误`
         console.log(msg, err)
         return { err: msg }
     }
-
-}
-
-
-export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[]) {
-    return await generateNewVersion(documentInfo, cmdItemList)
 }

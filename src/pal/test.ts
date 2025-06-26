@@ -43,10 +43,10 @@ function testTextToPath(font: string, fontSize: number, charCode: number) {
     ctx.fillText(String.fromCharCode(charCode), 0, 0)
 
     const pngData = canvas.toBufferSync("png", { outline: true })
-    fs.writeFileSync("testTextToPath.png", pngData)
+    fs.writeFileSync("testTextToPath.png", new Uint8Array(pngData))
 
     const svgData = canvas.toBufferSync("svg", { outline: true })
-    fs.writeFileSync("testTextToPath.svg", svgData)
+    fs.writeFileSync("testTextToPath.svg", new Uint8Array(svgData))
 
     const pathReg = /d="(.*)"/
     const regRes = pathReg.exec(svgData.toString())

@@ -13,6 +13,7 @@ import { ServerPort } from "./consts"
 import { shortLog } from "./utils/shortlog"
 import { mongodb } from "./mongo"
 import minimist from "minimist"
+import { reviewDocumentData } from "./review"
 
 // import * as console_util from "./utils/console_util"
 // console_util.objectToStr()
@@ -75,6 +76,25 @@ router.post("/generate", async (ctx, next) => {
         ctx.body = err;
     }
 })
+
+router.post("/review", async (ctx, next) => {
+    const reqParams = ctx.request.body as any;
+    const documentInfo = reqParams.documentInfo;
+    if (!documentInfo) {
+        ctx.status = 400;
+        ctx.body = "参数错误：缺少documentInfo";
+        return;
+    }
+
+    const { result, err } = await reviewDocumentData(documentInfo);
+    if (result) {
+        ctx.body = safeStringify(result);
+    } else {
+        ctx.status = 202;
+        ctx.body = err;
+    }
+})
+
 // app.use(BodyParser())
 app.use(router.routes())
 app.use(router.allowedMethods())

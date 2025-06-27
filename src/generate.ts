@@ -184,7 +184,7 @@ export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[
 }
 
 
-function getImageRefList(shapes: Shape[]): string[] {
+export function getImageRefList(shapes: Shape[]): string[] {
     const imageRefList: string[] = []
     for (const shape of shapes) {
         if (shape.style.fills.length > 0) {

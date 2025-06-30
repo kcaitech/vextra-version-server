@@ -1,4 +1,4 @@
-import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO } from "@kcdesign/data";
+import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO, Shape } from "@kcdesign/data";
 import { CmdItem, DocumentInfo } from "./types";
 import { storage } from "../provider/storage";
 import * as times_util from "../utils/times_util"
@@ -126,10 +126,7 @@ export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[
         const page = await document.pagesMgr.get(_page.id);
         if (!page) continue;
         pageList.push(page)
-        imageRefList.push(...(Array.from(page.shapes.values())
-            .filter(shape => shape.type === ShapeType.Image) as ImageShape[])
-            .map(shape => shape.imageRef)
-        )
+        imageRefList.push(...getImageRefList(Array.from(page.shapes.values())))
     }
     const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => { })
     const timeoutPromise = times_util.sleepAsync(1000 * 60)
@@ -163,4 +160,18 @@ export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[
         console.log(msg, err)
         return { err: msg }
     }
+}
+
+function getImageRefList(shapes: Shape[]): string[] {
+    const imageRefList: string[] = []
+    for (const shape of shapes) {
+        if (shape.style.fills.length > 0) {
+            for (const fill of shape.style.fills) {
+                if (fill.imageRef) {
+                    imageRefList.push(fill.imageRef)
+                }
+            }
+        }
+    }
+    return imageRefList
 }

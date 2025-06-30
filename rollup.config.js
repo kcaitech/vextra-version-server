@@ -9,7 +9,16 @@ export default defineConfig({
     output: {
         file: 'dist/server.mjs',
         format: 'es',
-        sourcemap: true
+        sourcemap: true,
+        banner: `
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
+        `.trim()
     },
     plugins: [
         resolve({

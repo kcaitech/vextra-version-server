@@ -7,8 +7,8 @@ import terser from '@rollup/plugin-terser';
 export default defineConfig({
     input: 'src/server.ts',
     output: {
-        file: 'dist/server.cjs',
-        format: 'cjs',
+        file: 'dist/server.mjs',
+        format: 'es',
         sourcemap: true
     },
     plugins: [
@@ -25,8 +25,6 @@ export default defineConfig({
         terser()
     ],
     external: [
-        '@kcdesign/coop',
-        '@kcdesign/data',
         'express',
         'morgan',
         'yargs',

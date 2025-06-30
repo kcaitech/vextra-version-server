@@ -39,7 +39,7 @@
         "aws-sdk": "^2.1423.0",
         "express": "^5.1.0",
         "js-yaml": "^4.1.0",
-        "mongodb": "^6.3.0",
+        "mongodb": "^4.17.2",
         "morgan": "^1.10.0",
         "skia-canvas": "^2.0.2",
         "tslib": "^2.6.0",

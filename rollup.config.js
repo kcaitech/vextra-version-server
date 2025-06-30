@@ -7,7 +7,7 @@ import terser from '@rollup/plugin-terser';
 export default defineConfig({
     input: 'src/server.ts',
     output: {
-        file: 'dist/server.js',
+        file: 'dist/server.cjs',
         format: 'cjs',
         sourcemap: true
     },

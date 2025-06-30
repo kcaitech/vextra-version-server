@@ -9,10 +9,10 @@ export async function initModule() {
     if (isInitialized) return;
 
     initDataModule(measure, text2path, {
-        Path2D: Path2D,
+        Path2D: Path2D as any,
         OffscreenCanvas: Canvas as any,
-        Image: Image,
-        DOMMatrix: DOMMatrix,
+        Image: Image as any,
+        DOMMatrix: DOMMatrix as any,
     })
 
     isInitialized = true

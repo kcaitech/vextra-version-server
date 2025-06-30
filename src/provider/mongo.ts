@@ -5,7 +5,7 @@ let mongoDBClient: MongoClient
 async function connect() {
     try {
         mongoDBClient = await MongoClient.connect(config.mongo.url, {
-            useBigInt64: true,
+            // useBigInt64: true,
         })
     } catch (err) {
         console.log("mongodb连接失败", err)

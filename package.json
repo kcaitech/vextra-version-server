@@ -4,13 +4,13 @@
     "private": true,
     "author": "kcaisoft.com",
     "description": "document op server",
-    "main": "dist/server.js",
+    "main": "dist/server.cjs",
     "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build-dev": "rollup -c --environment NODE_ENV:development",
         "build": "rollup -c --environment NODE_ENV:production",
-        "server": "npm run build-dev && node ./dist/server.js"
+        "server": "npm run build-dev && node ./dist/server.cjs"
     },
     "devDependencies": {
         "@rollup/plugin-commonjs": "^25.0.7",

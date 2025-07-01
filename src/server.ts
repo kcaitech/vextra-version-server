@@ -24,12 +24,12 @@ shortLog()
 const app = express()
 
 app.use(morgan('combined'))
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ 
     extended: true, 
-    limit: '2mb' 
+    limit: '50mb' 
 }))
-app.use(express.text({ limit: '2mb' }))
+app.use(express.text({ limit: '50mb' }))
 
 app.get("/health_check", async (req, res) => {
     try {

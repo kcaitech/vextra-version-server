@@ -1,8 +1,8 @@
 import { IO, Page, TransactDataGuard } from "@kcdesign/data"
-import { DocumentInfo } from "./basic"
-import { storage } from "./storage";
-import { getImageRefList } from "./generate";
+import { getImageRefList } from "./handler/generate";
 import * as times_util from "./utils/times_util"
+import { DocumentInfo } from "./handler/types";
+import { storage } from "./provider/storage";
 
 
 type ReviewResult = { documentInfo: DocumentInfo, documentData: IO.ExFromJson, documentText: string, mediasSize: number, pageSvgs: string[] }

@@ -1,115 +1,75 @@
-// import { db } from "./mysql_db"
-import { init as palInit } from "./pal/init"
-import { storage } from "./storage"
+import { initModule } from "./pal/init"
+import { storage } from "./provider/storage"
 import * as exit_util from "./utils/exit_util"
-import Koa from "koa"
-import Router from "koa-router"
-import Static from "koa-static"
-import bodyParser from "koa-bodyparser"
-import { generate } from "./generate"
-// import { mongodb } from "./mongo"
-import logger from "koa-logger"
-import { ServerPort } from "./consts"
+import express from "express"
+import morgan from "morgan"
+import { ServerPort } from "./config"
 import { shortLog } from "./utils/shortlog"
-import { mongodb } from "./mongo"
-import minimist from "minimist"
+import { mongodb } from "./provider/mongo"
+import yargs from "yargs"
+import { generate_handler } from "./handler/generate_handler"
 import { reviewDocumentData } from "./review"
 
-// import * as console_util from "./utils/console_util"
-// console_util.objectToStr()
-
 // 解析命令行参数
-const argv = minimist(process.argv.slice(2), {
-    string: ["port"],
-    default: {
-        port: ServerPort.toString()
-    }
-});
+// 用yargs从运行参数中获取token
+const argv = yargs(process.argv).option('port', {
+    type: 'string',
+    describe: 'port',
+    default: ServerPort.toString()
+}).argv as { port: string };
+
+console.log("argv", argv)
 
 shortLog()
 
-const app = new Koa()
-const router = new Router()
+const app = express()
 
-app.use(logger())
-app.use(bodyParser({
-    jsonLimit: '10mb',
-    formLimit: '2mb',
-    textLimit: '2mb',
-    xmlLimit: '2mb'
+app.use(morgan('combined'))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ 
+    extended: true, 
+    limit: '50mb' 
 }))
+app.use(express.text({ limit: '50mb' }))
 
-// 用于处理循环引用的函数
-function safeStringify(obj: any): any {
-    return JSON.parse(JSON.stringify(obj, (k, v) => k.startsWith('__') ? undefined : v))
-}
+app.get("/health_check", async (req, res) => {
+    try {
+        await storage();
+        await mongodb();
+        await initModule();
 
-router.get("/health_check", async (ctx, next) => {
-    if (!palInitFinished) {
-        ctx.status = 500
-        ctx.body = "初始化未完成"
-        return
-    }
-
-    await mongodb();
-    await storage();
-
-    ctx.body = "success"
-})
-
-router.post("/generate", async (ctx, next) => {
-    const reqParams = ctx.request.body as any;
-    const documentInfo = reqParams.documentInfo;
-    const cmdItemList = reqParams.cmdItemList;
-    if (!documentInfo || !cmdItemList) {
-        ctx.status = 400;
-        ctx.body = "参数错误：缺少documentInfo或cmdItemList";
-        return;
-    }
-
-    const { result, err } = await generate(documentInfo, cmdItemList);
-    
-    if (result) {
-        ctx.body = safeStringify(result);
-    } else {
-        ctx.status = 202;
-        ctx.body = err;
+        res.send("success")
+    } catch (error) {
+        res.status(500).send("Internal Server Error")
     }
 })
 
-router.post("/review", async (ctx, next) => {
-    const reqParams = ctx.request.body as any;
+app.post("/generate", generate_handler)
+
+app.post("/review", async (req, res) => {
+    const reqParams = req.body as any;
     const documentInfo = reqParams.documentInfo;
     if (!documentInfo) {
-        ctx.status = 400;
-        ctx.body = "参数错误：缺少documentInfo";
+        res.status(400).send("参数错误：缺少documentInfo");
         return;
     }
 
     const { result, err } = await reviewDocumentData(documentInfo);
     if (result) {
-        ctx.body = safeStringify(result);
+        res.json(result);
     } else {
-        ctx.status = 202;
-        ctx.body = err;
+        res.status(202).send(err);
     }
 })
 
-// app.use(BodyParser())
-app.use(router.routes())
-app.use(router.allowedMethods())
-app.use(Static("/app/static"))
-
-let palInitFinished = false
 const port = parseInt(argv.port)
 
 async function run() {
     await storage();
     await mongodb();
-
+    await initModule();
     app.listen(port, () => {
         console.log(`kcversion服务已启动，监听端口: ${port}`)
-        palInit().then(() => palInitFinished = true).catch(err => console.log("palInit错误", err))
     })
 }
 

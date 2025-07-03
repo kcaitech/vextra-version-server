@@ -1,13 +1,19 @@
-import {initModule} from "@kcdesign/data"
-import {getTextPath} from "./textpath"
-import {measure} from "./measure"
+import { initModule as initDataModule } from "@kcdesign/data"
+import { text2path } from "./text2path"
+import { measure } from "./measure"
+import { Path2D, Canvas, Image, DOMMatrix } from "skia-canvas"
 
 let isInitialized: boolean = false
 
-export async function init() {
+export async function initModule() {
     if (isInitialized) return;
 
-    initModule(measure, getTextPath)
+    initDataModule(measure, text2path, {
+        Path2D: Path2D as any,
+        OffscreenCanvas: Canvas as any,
+        Image: Image as any,
+        DOMMatrix: DOMMatrix as any,
+    })
 
     isInitialized = true
 }

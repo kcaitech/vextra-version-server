@@ -7,7 +7,7 @@ export async function generate_handler (req: Request, res: Response) {
     const reqParams = req.body as {
         documentInfo: DocumentInfo,
         cmdItemList: CmdItem[],
-        force?: boolean,
+        // force?: boolean,
         gen_pages_png?: {
             tmp_dir: string,
         }
@@ -19,7 +19,7 @@ export async function generate_handler (req: Request, res: Response) {
         return;
     }
 
-    const { result, err } = await generate(documentInfo, cmdItemList, !!reqParams.force, reqParams.gen_pages_png);
+    const { result, err } = await generate(documentInfo, cmdItemList, reqParams.gen_pages_png);
 
     if (result) {
         res.json(result);

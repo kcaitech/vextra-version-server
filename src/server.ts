@@ -8,7 +8,6 @@ import { shortLog } from "./utils/shortlog"
 import { mongodb } from "./provider/mongo"
 import yargs from "yargs"
 import { generate_handler } from "./handler/generate_handler"
-import { reviewDocumentData } from "./review"
 
 // 解析命令行参数
 // 用yargs从运行参数中获取token
@@ -45,22 +44,6 @@ app.get("/health_check", async (req, res) => {
 })
 
 app.post("/generate", generate_handler)
-
-app.post("/review", async (req, res) => {
-    const reqParams = req.body as any;
-    const documentInfo = reqParams.documentInfo;
-    if (!documentInfo) {
-        res.status(400).send("参数错误：缺少documentInfo");
-        return;
-    }
-
-    const { result, err } = await reviewDocumentData(documentInfo);
-    if (result) {
-        res.json(result);
-    } else {
-        res.status(202).send(err);
-    }
-})
 
 const port = parseInt(argv.port)
 

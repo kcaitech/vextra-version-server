@@ -86,13 +86,13 @@ function saveFile(
 
 type GenResult = { documentInfo: DocumentInfo, lastCmdVerId: string, documentData: IO.ExFromJson, documentText: string, mediasSize: number, pages_png_generated: string[] }
 
-export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[], force: boolean, gen_pages_png?: { tmp_dir: string }): Promise<{ result?: GenResult, err?: string }> {
+export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[], gen_pages_png?: { tmp_dir: string }): Promise<{ result?: GenResult, err?: string }> {
     const cmdList = parseCmdList(cmdItemList)
-    if (cmdList.length === 0 && !force) {
-        const msg = `[${documentInfo.id}]无新cmd，不需要生成新版本`
-        console.log(msg)
-        return { err: msg }
-    }
+    // if (cmdList.length === 0 && !force) {
+    //     const msg = `[${documentInfo.id}]无新cmd，不需要生成新版本`
+    //     console.log(msg)
+    //     return { err: msg }
+    // }
 
     const _storage = await storage();
     const repo = new TransactDataGuard()

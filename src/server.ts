@@ -8,6 +8,7 @@ import { shortLog } from "./utils/shortlog"
 import { mongodb } from "./provider/mongo"
 import yargs from "yargs"
 import { generate_handler } from "./handler/generate_handler"
+import { health_handler } from "./handler/health_handler"
 
 // 解析命令行参数
 // 用yargs从运行参数中获取token
@@ -31,17 +32,7 @@ app.use(express.urlencoded({
 }))
 app.use(express.text({ limit: '50mb' }))
 
-app.get("/health_check", async (req, res) => {
-    try {
-        await storage();
-        await mongodb();
-        await initModule();
-
-        res.send("success")
-    } catch (error) {
-        res.status(500).send("Internal Server Error")
-    }
-})
+app.get("/health_check", health_handler)
 
 app.post("/generate", generate_handler)
 

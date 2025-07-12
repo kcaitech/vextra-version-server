@@ -15,8 +15,8 @@
     "devDependencies": {
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-node-resolve": "^15.2.3",
-        "@rollup/plugin-typescript": "^11.1.6",
         "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^11.1.6",
         "@types/ali-oss": "^6.16.9",
         "@types/jest": "^29.5.3",
         "@types/js-yaml": "^4.0.9",
@@ -33,24 +33,24 @@
     "dependencies": {
         "@kcdesign/coop": "file:../kcdesign-coop",
         "@kcdesign/data": "file:../kcdesign-data",
+        "@mapbox/node-pre-gyp": "^1.0.11",
         "@types/express": "^5.0.3",
         "@types/morgan": "^1.9.10",
         "ali-oss": "^6.18.1",
         "aws-sdk": "^2.1423.0",
+        "cargo-cp-artifact": "^0.1",
         "express": "^5.1.0",
+        "glob": "^11.0.0",
         "js-yaml": "^4.1.0",
         "mongodb": "^4.17.2",
         "morgan": "^1.10.0",
+        "path-browserify": "^1.0.1",
+        "simple-get": "^4.0.1",
         "skia-canvas": "^2.0.2",
+        "string-split-by": "^1.0.0",
         "tslib": "^2.6.0",
         "uuid": "^9.0.1",
         "ws": "^8.13.0",
-        "yargs": "^18.0.0",
-        "@mapbox/node-pre-gyp": "^1.0.11",
-        "cargo-cp-artifact": "^0.1",
-        "glob": "^11.0.0",
-        "path-browserify": "^1.0.1",
-        "simple-get": "^4.0.1",
-        "string-split-by": "^1.0.0"
+        "yargs": "^18.0.0"
     }
 }

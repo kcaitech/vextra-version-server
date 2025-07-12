@@ -1,14 +1,12 @@
 import { Page, TransactDataGuard, Repo, IO, Shape } from "@kcdesign/data";
 import { CmdItem, DocumentInfo } from "./types";
 import { storage } from "../provider/storage";
-import * as times_util from "../utils/times_util"
-import * as console_util from "../utils/console_util"
 import { mongodb } from "../provider/mongo";
 import { CoopRepository, parseCmds } from "@kcdesign/coop";
 import path from "path";
 import fs from "fs";
 import { Canvas } from "skia-canvas";
-
+import { withTimeout } from "../utils/with_timeout";
 
 async function findCmdItem(documentId: string, startCmdId?: number, endCmdId?: number): Promise<CmdItem[]> {
     const documentCollection = await mongodb();
@@ -103,22 +101,20 @@ export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[
     coopRepo.setNet(new CoopNet(documentInfo.id))
     coopRepo.setBaseVer(Number(documentInfo.last_cmd_id))
     try {
-        const timeoutPromise = times_util.sleepAsyncReject(1000 * 10, new Error("coopRepo.receive超时"))
         const p = new Promise<void>((resolve, reject) => {
             coopRepo.onProcessedReceiveCmds(() => {
                 resolve()
             })
             coopRepo.receive(cmdList)
         })
-        await Promise.race([p, timeoutPromise])
+        await withTimeout(p, 1000 * 10, "coopRepo.receive超时")
     } catch (err) {
-        coopRepo.quit() // 需要退出
-        console_util.enableConsole(console_util.ConsoleType.log)
         const msg = `[${documentInfo.id}]generateNewVersion错误：coopRepo.receive错误`
         console.log(msg, err)
         return { err: msg }
+    } finally {
+        coopRepo.quit() // 需要退出
     }
-    console_util.enableConsole(console_util.ConsoleType.log)
 
     const pageList: Page[] = []
     const imageRefList: string[] = []
@@ -129,8 +125,7 @@ export async function generate(documentInfo: DocumentInfo, cmdItemList: CmdItem[
         imageRefList.push(...getImageRefList(Array.from(page.shapes.values())))
     }
     const imageAllLoadPromise = Promise.allSettled(imageRefList.map(ref => document.mediasMgr.get(ref))).catch(err => { })
-    const timeoutPromise = times_util.sleepAsync(1000 * 60)
-    await Promise.race([imageAllLoadPromise, timeoutPromise])
+    await withTimeout(imageAllLoadPromise, 1000 * 60, "imageAllLoadPromise超时")
 
     // 导出page图片
     const pages_png_generated: string[] = []

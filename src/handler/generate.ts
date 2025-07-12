@@ -1,4 +1,4 @@
-import { ImageShape, Page, TransactDataGuard, ShapeType, Repo, IO, Shape } from "@kcdesign/data";
+import { Page, TransactDataGuard, Repo, IO, Shape } from "@kcdesign/data";
 import { CmdItem, DocumentInfo } from "./types";
 import { storage } from "../provider/storage";
 import * as times_util from "../utils/times_util"

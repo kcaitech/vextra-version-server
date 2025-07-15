@@ -140,7 +140,7 @@ export async function storage() {
             region: storageConfig.region,
             accessKey: storageConfig.accessKeyID,
             secretKey: storageConfig.secretAccessKey,
-            bucketName: storageConfig.bucketName,
+            bucketName: storageConfig.documentBucket,
         }
         _storage = config.storage.provider === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
     }

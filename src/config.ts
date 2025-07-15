@@ -11,8 +11,7 @@ type Storage = {
     region: string,
     accessKeyID: string,
     secretAccessKey: string,
-    bucketName: string,
-    filesBucketName: string
+    documentBucket: string,
 }
 
 // type Storage = {

@@ -10,6 +10,5 @@ storage:
   secretAccessKey: "GmwAzetY1L0jU4pUAqpO7RJGIsG7k3gozVH6whoJ"
   stsAccessKeyID: "user"
   stsSecretAccessKey: "GmwAzetY1L0jU4pUAqpO7RJGIsG7k3gozVH6whoJ"
-  bucketName: "document"
-  filesBucketName: "files"
+  documentBucket: "document"
 

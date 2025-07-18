@@ -3,24 +3,32 @@ import { storage } from "./provider/storage"
 import * as exit_util from "./utils/exit_util"
 import express from "express"
 import morgan from "morgan"
-import { ServerPort } from "./config"
 import { shortLog } from "./utils/shortlog"
 import { mongodb } from "./provider/mongo"
 import yargs from "yargs"
 import { generate_handler } from "./handler/generate_handler"
 import { health_handler } from "./handler/health_handler"
+import { initConfig } from "./config"
+
+const defaultPort = 30000
+const defaultConfigFile = "config/config.yaml"
 
 // 解析命令行参数
 // 用yargs从运行参数中获取token
 const argv = yargs(process.argv).option('port', {
     type: 'string',
     describe: 'port',
-    default: ServerPort.toString()
-}).argv as { port: string };
+    default: defaultPort
+}).option('config', {
+    type: 'string',
+    describe: 'config file',
+    default: defaultConfigFile
+}).argv as { port: number, config: string };
 
 console.log("argv", argv)
 
 shortLog()
+initConfig(argv.config)
 
 const app = express()
 
@@ -36,7 +44,7 @@ app.get("/health_check", health_handler)
 
 app.post("/generate", generate_handler)
 
-const port = parseInt(argv.port)
+const port = (argv.port)
 
 async function run() {
     await storage();

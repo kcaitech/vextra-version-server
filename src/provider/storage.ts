@@ -72,7 +72,7 @@ export class S3Storage implements IO.IStorage {
 }
 
 import OSS from "ali-oss"
-import config from "../config"
+import { getConfig } from "../config"
 
 export class OssStorage implements IO.IStorage {
     private client: OSS
@@ -128,7 +128,7 @@ export class OssStorage implements IO.IStorage {
 let _storage: IO.IStorage
 export async function storage() {
     if (!_storage) {
-        const storageConfig = config.storage
+        const storageConfig = getConfig().storage
         const provider = storageConfig.provider
 
         if (provider !== "oss" && provider !== "minio" && provider !== "s3") {
@@ -142,7 +142,7 @@ export async function storage() {
             secretKey: storageConfig.secretAccessKey,
             bucketName: storageConfig.documentBucket,
         }
-        _storage = config.storage.provider === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
+        _storage = storageConfig.provider === "oss" ? new OssStorage(storageOptions) : new S3Storage(storageOptions)
     }
     return _storage;
 }

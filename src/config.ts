@@ -1,4 +1,3 @@
-export const ServerPort = 30000
 
 type Mongodb = {
     url: string,
@@ -31,16 +30,20 @@ type Config = {
 import yaml from "js-yaml"
 import fs from "fs"
 
-let config: Config;
-const configfile = 'config/config.yaml'
+let _config: Config;
 
-if (!fs.existsSync(configfile)) {
-    throw new Error(`config file ${configfile} not found`)
+export function initConfig(config: string) {
+    if (!fs.existsSync(config)) {
+        throw new Error(`config file ${config} not found`)
+    }
+    const cf = fs.readFileSync(config);
+    _config = yaml.load(cf.toString()) as Config;
+    console.log("config", _config)
 }
 
-const cf = fs.readFileSync(configfile);
-config = yaml.load(cf.toString()) as Config;
-
-console.log("config", config)
-
-export default config;
+export function getConfig() {
+    if (!_config) {
+        throw new Error("config not initialized")
+    }
+    return _config;
+}

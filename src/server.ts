@@ -40,7 +40,7 @@ app.use(express.urlencoded({
 }))
 app.use(express.text({ limit: '50mb' }))
 
-app.get("/health_check", health_handler)
+app.get("/health", health_handler)
 
 app.post("/generate", generate_handler)
 

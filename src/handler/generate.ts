@@ -2,7 +2,7 @@ import { Page, TransactDataGuard, Repo, IO, Shape } from "@kcdesign/data";
 import { CmdItem, DocumentInfo } from "./types";
 import { storage } from "../provider/storage";
 import { mongodb } from "../provider/mongo";
-import { CoopRepository, parseCmds } from "@kcdesign/coop";
+import { Cmd, CoopRepository, INet, parseCmds } from "@kcdesign/coop";
 import path from "path";
 import fs from "fs";
 import { Canvas } from "skia-canvas";
@@ -22,9 +22,9 @@ async function findCmdItem(documentId: string, startCmdId?: number, endCmdId?: n
     return await findCursor.toArray() as any as CmdItem[]
 }
 
-function parseCmdList(cmdItemList: CmdItem[]): Repo.Cmd[] {
+function parseCmdList(cmdItemList: CmdItem[]): Cmd[] {
     return parseCmds(cmdItemList.map(cmdItem => {
-        const cmd: Repo.Cmd = {
+        const cmd: Cmd = {
             id: cmdItem.id,
             ops: cmdItem.ops,
             version: cmdItem.version,
@@ -41,7 +41,7 @@ function parseCmdList(cmdItemList: CmdItem[]): Repo.Cmd[] {
 }
 
 
-class CoopNet implements Repo.INet {
+class CoopNet implements INet {
     private documentId: string
     constructor(documentId: string) {
         this.documentId = documentId
@@ -50,16 +50,16 @@ class CoopNet implements Repo.INet {
     hasConnected(): boolean {
         return true;
     }
-    async pullCmds(from: number, to: number): Promise<Repo.Cmd[]> {
+    async pullCmds(from: number, to: number): Promise<Cmd[]> {
         const startCmdId = from ? (from) : 0
         const endCmdId = to ? (to) : undefined
         const cmdItemList = await findCmdItem(this.documentId, startCmdId, endCmdId)
         return parseCmdList(cmdItemList)
     }
-    async postCmds(cmds: Repo.Cmd[]): Promise<boolean> {
+    async postCmds(cmds: Cmd[]): Promise<boolean> {
         return false;
     }
-    watchCmds(watcher: (cmds: Repo.Cmd[]) => void): () => void {
+    watchCmds(watcher: (cmds: Cmd[]) => void): () => void {
         return () => { };
     }
 

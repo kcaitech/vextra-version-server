@@ -4,9 +4,9 @@ import { getConfig } from "../config"
 let mongoDBClient: MongoClient
 async function connect() {
     try {
-        mongoDBClient = await MongoClient.connect(getConfig().mongo.url, {
-            // useBigInt64: true,
-        })
+        const url = getConfig().mongo.url
+        console.log("connect mongo url:", url)
+        mongoDBClient = await MongoClient.connect(url)
     } catch (err) {
         console.log("mongodb连接失败", err)
         throw err

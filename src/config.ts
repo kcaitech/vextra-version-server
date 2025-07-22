@@ -38,7 +38,7 @@ export function initConfig(config: string) {
     }
     const cf = fs.readFileSync(config);
     _config = yaml.load(cf.toString()) as Config;
-    console.log("config", _config)
+    console.log("config", JSON.stringify(_config))
 }
 
 export function getConfig() {

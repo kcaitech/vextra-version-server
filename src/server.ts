@@ -31,6 +31,7 @@ shortLog()
 initConfig(argv.config)
 
 const app = express()
+app.get("/health", health_handler)
 
 app.use(morgan('combined'))
 app.use(express.json({ limit: '50mb' }))
@@ -39,8 +40,6 @@ app.use(express.urlencoded({
     limit: '50mb' 
 }))
 app.use(express.text({ limit: '50mb' }))
-
-app.get("/health", health_handler)
 
 app.post("/generate", generate_handler)
 

@@ -1,7 +1,0 @@
-.VSCodeCounter
-.DS_Store
-.idea
-node_modules
-dist
-deployment
-package-lock.json
